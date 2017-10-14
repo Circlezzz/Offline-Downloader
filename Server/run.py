@@ -14,7 +14,7 @@ commands_argv4='changePosition'.split()
 token='Aa111111'
 
 #CheckStatus
-def CheckStatus(token='', gid):
+def CheckStatus(gid,token=''):
     jsonreq = json.dumps({
         'jsonrpc': '2.0',
         'id': 'qwer',
@@ -57,7 +57,7 @@ class GetCommand(threading.Thread):
                 result=cmd_argv4(token,*cmd[1:],cmd[0])
                 connection.send(result)
             elif cmd[0]=='tellStatus':
-                CheckStatus(token=token,cmd[1])
+                CheckStatus(cmd[1],token=token)
             else:
                 pass
 
