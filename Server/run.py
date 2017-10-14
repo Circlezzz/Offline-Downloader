@@ -62,9 +62,9 @@ class GetCommand(threading.Thread):
                     CheckStatus(cmd[1],token=token)
                 else:
                     pass
-            except KeyboardInterrupt:
+        except KeyboardInterrupt:
                 raise(KeyboardInterrupt('Interrupt by user'))
-            finally:
+        finally:
                 sock.close()
 # class SendInfo(threading.Thread):
 #     def __init__(self,lock,threadName):
