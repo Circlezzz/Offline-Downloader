@@ -31,8 +31,8 @@ def StartProcess():
 
 #Deal with command sent by client
 class GetCommand(threading.Thread):
-    def __init__(self,lock,threadName,group):
-        super().__init__(self,threadName,group=group)
+    def __init__(self,lock,threadName):
+        super().__init__(self,name=threadName)
         self.lock=lock
 
     def run():
@@ -116,7 +116,7 @@ def cmd_argv4(token,gid,pos,how,cmd):
 try:
     child_process=StartProcess()
     lock=threading.Lock()
-    listen_thread=GetCommand(lock,'ListenThread',None)
+    listen_thread=GetCommand(lock,'ListenThread')
     listen_thread.start()
 except KeyboardInterrupt:
     raise(KeyboardInterrupt('interupted by user'))
