@@ -118,7 +118,7 @@ try:
     lock=threading.Lock()
     listen_thread=GetCommand(lock,'ListenThread')
     listen_thread.start()
-except:
-    raise()
+except KeyboardInterrupt:
+    raise(KeyboardInterrupt('interupted by user'))
 finally:
     child_process.terminate()
