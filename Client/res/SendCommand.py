@@ -6,11 +6,11 @@ import requests,json,socket
 server='192.168.122.165'
 port=26879
 
-def SendCommand(cmds)
+def SendCommand(cmds):
     sock=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
-    sock.connect((host,port))
-    sock.send(cmds)
+    sock.connect((server,port))
+    sock.send(cmds.encode('utf8'))
     data=sock.recv(1024)
     return data
 
-SendCommand('')
+SendCommand('addUri https://github.com/JustArchi/ArchiSteamFarm/releases/download/3.0.3.6/ASF-linux-x64.zip')

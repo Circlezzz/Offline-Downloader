@@ -35,32 +35,37 @@ class GetCommand(threading.Thread):
         super().__init__(name=threadName)
         self.lock=lock
 
-    def run():
+    def run(self):
         sock=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
         sock.bind((host,port))
         sock.listen(5)
-        while True:
-            connection,address=sock.accept()
-            data=connection.recv(1024)
-            cmd=data.split()
-            result=None
-            if cmd[0] in commands_argv1:
-                result=cmd_argv1(token,cmd[0])
-                connection.send(result)
-            elif cmd[0] in commands_argv2:
-                result=cmd_argv2(token,cmd[1],cmd[0])
-                connection.send(result)
-            elif cmd[0] in commands_argv2_list:
-                result=cmd_argv2_list(token,cmd[1:],cmd[0])
-                connection.send(result)
-            elif cmd[0] in commands_argv4:
-                result=cmd_argv4(token,*cmd[1:],cmd[0])
-                connection.send(result)
-            elif cmd[0]=='tellStatus':
-                CheckStatus(cmd[1],token=token)
-            else:
-                pass
-
+        try:
+            while True:
+                connection,address=sock.accept()
+                data=connection.recv(1024)
+                data=data.decode('utf8')
+                cmd=data.split()
+                result=None
+                if cmd[0] in commands_argv1:
+                    result=cmd_argv1(token,cmd[0])
+                    connection.send(result)
+                elif cmd[0] in commands_argv2:
+                    result=cmd_argv2(token,cmd[1],cmd[0])
+                    connection.send(result)
+                elif cmd[0] in commands_argv2_list:
+                    result=cmd_argv2_list(token,cmd[1:],cmd[0])
+                    connection.send(result)
+                elif cmd[0] in commands_argv4:
+                    result=cmd_argv4(token,*cmd[1:],cmd[0])
+                    connection.send(result)
+                elif cmd[0]=='tellStatus':
+                    CheckStatus(cmd[1],token=token)
+                else:
+                    pass
+            except KeyboardInterrupt:
+                raise(KeyboardInterrupt('Interrupt by user'))
+            finally:
+                sock.close()
 # class SendInfo(threading.Thread):
 #     def __init__(self,lock,threadName):
 #         super().__init__(self,threadName)
