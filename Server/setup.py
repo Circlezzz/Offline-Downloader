@@ -17,3 +17,7 @@ status = subprocess.call(
     ['make', '-C', './res/src/aria2-1.32.0-linux-gnu-64bit-build1', 'install'],
     shell=False)
 p_conf.make_conf()
+status=subprocess.call(['mkdir','/conf'],shell=False)
+status=subprocess.call(['touch','/conf/session.dat'],shell=False)
+status=subprocess.call(['touch','/conf/aria2.log'],shell=False)
+status=subprocess.call(['mv','./res/dht.dat','/conf/dht.dat'],shell=False)
