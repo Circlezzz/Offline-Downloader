@@ -44,16 +44,16 @@ class GetCommand(threading.Thread):
             data=connection.recv(1024)
             cmd=data.split()
             result=None
-            if cmd[0] is in commands_argv1:
+            if cmd[0] in commands_argv1:
                 result=cmd_argv1(token,cmd[0])
                 connection.send(result)
-            elif cmd[0] is in commands_argv2:
+            elif cmd[0] in commands_argv2:
                 result=cmd_argv2(token,cmd[1],cmd[0])
                 connection.send(result)
-            elif cmd[0] is in commands_argv2_list:
+            elif cmd[0] in commands_argv2_list:
                 result=cmd_argv2_list(token,cmd[1:],cmd[0])
                 connection.send(result)
-            elif cmd[0] is in commands_argv4:
+            elif cmd[0] in commands_argv4:
                 result=cmd_argv4(token,*cmd[1:],cmd[0])
                 connection.send(result)
             elif cmd[0]=='tellStatus':
