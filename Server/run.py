@@ -113,7 +113,12 @@ def cmd_argv4(token,gid,pos,how,cmd):
     r=requests.post('http://localhost:6800/jsonrpc',jsonreq)
     return r.text
 
-child_process=StartProcess()
-lock=threading.Lock()
-listen_thread=GetCommand(lock,'ListenThread')
-listen_thread.start()
+try:
+    child_process=StartProcess()
+    lock=threading.Lock()
+    listen_thread=GetCommand(lock,'ListenThread')
+    listen_thread.start()
+except:
+    raise()
+finally:
+    child_process.terminate()
