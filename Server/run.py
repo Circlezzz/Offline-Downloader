@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 #-*- coding:utf-8 -*-
 
-import threading, requests, subprocess, json,socket,os
+import threading, requests, subprocess, json,socket,os,signal
 
 port=26879  #sever listen port
 host=''     #listen client ip
@@ -137,3 +137,9 @@ print(child_process)
 lock=threading.Lock()
 listen_thread=GetCommand(lock,'ListenThread')
 listen_thread.start()
+try:
+    listen_thread.join()
+except KeyboardInterrupt:
+    print('Interrupted by user')
+finally:
+    os.kill(child_process,signal.SIGINT)
