@@ -37,7 +37,10 @@ def StartProcess():
         pid2=os.fork()
         if pid2==0:
             grandson_process=subprocess.Popen(['/usr/bin/aria2c'])
-            grandson_process.wait()
+            try:
+                grandson_process.wait()
+            except KeyboardInterrupt:
+                print('Interrupted by user')
         else:
             os.write(wpip,str(pid2).encode('utf8'))
             os._exit(0)
@@ -82,7 +85,7 @@ class GetCommand(threading.Thread):
                 else:
                     pass
         except KeyboardInterrupt:
-                raise(KeyboardInterrupt('Interrupt by user'))
+                print('Interrupted by user')
         finally:
                 sock.close()
 # class SendInfo(threading.Thread):
