@@ -11,6 +11,7 @@ def SendCommand(cmds):
     sock.connect((server,port))
     sock.send(cmds.encode('utf8'))
     data=sock.recv(1024)
+    sock.close()
     return data
 
 SendCommand('addUri https://github.com/JustArchi/ArchiSteamFarm/releases/download/3.0.3.6/ASF-linux-x64.zip')
