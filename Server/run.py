@@ -15,6 +15,9 @@ commands_argv4='changePosition'.split()
 #secure token
 token='Passw0rd'
 
+#global bool for thread
+run=True
+
 #CheckStatus
 def CheckStatus(gid,token=''):
     jsonreq = json.dumps({
@@ -54,8 +57,9 @@ class GetCommand(threading.Thread):
         sock=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
         sock.bind((host,port))
         sock.listen(5)
+        global run
         try:
-            while True:
+            while run:
                 connection,address=sock.accept()
                 data=connection.recv(1024)
                 data=data.decode('utf8')
@@ -145,4 +149,5 @@ except KeyboardInterrupt:
     print('Interrupted by user')
 finally:
     os.kill(child_process,signal.SIGINT)
+    run=False
     listen_thread.wait()
