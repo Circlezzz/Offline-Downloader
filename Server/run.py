@@ -26,6 +26,7 @@ def CheckStatus(gid,token=''):
 
 #Start aria2 process
 def StartProcess():
+    rpip,wpip=os.pipe()
     pid=os.fork()
     if pid==0:
         pid2=os.fork()
@@ -33,9 +34,13 @@ def StartProcess():
             grandson_process=subprocess.Popen(['/usr/bin/aria2c'])
             grandson_process.wait()
         else:
+            os.write(wpip,pid2.encode())
             os._exit(0)
     else:
+        fobj=os.fdopen(rpip,'r')
+        recv=os.read(rpip,32)
         os.wait()
+        return recv
 
 #Deal with command sent by client
 class GetCommand(threading.Thread):
@@ -128,6 +133,7 @@ def cmd_argv4(token,gid,pos,how,cmd):
 
 
 child_process=StartProcess()
+print(child_process)
 lock=threading.Lock()
 listen_thread=GetCommand(lock,'ListenThread')
 listen_thread.start()
