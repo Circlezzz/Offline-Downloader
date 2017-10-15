@@ -52,9 +52,8 @@ def StartProcess():
 
 #Deal with command sent by client
 class GetCommand(threading.Thread):
-    def __init__(self,lock,threadName):
+    def __init__(self,threadName):
         super().__init__(name=threadName)
-        self.lock=lock
 
     def run(self):
         sock=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
@@ -143,8 +142,7 @@ def cmd_argv4(token,gid,pos,how,cmd):
 
 child_process=StartProcess()
 print(child_process)
-lock=threading.Lock()
-listen_thread=GetCommand(lock,'ListenThread')
+listen_thread=GetCommand('ListenThread')
 listen_thread.start()
 try:
     listen_thread.join()
