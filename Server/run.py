@@ -150,4 +150,4 @@ except KeyboardInterrupt:
 finally:
     os.kill(child_process,signal.SIGINT)
     run=False
-    listen_thread.wait()
+    listen_thread.join()
