@@ -33,7 +33,7 @@ def StartProcess():
             grandson_process=subprocess.Popen(['/usr/bin/aria2c'])
             grandson_process.wait()
         else:
-            os._exit()
+            os._exit(0)
     else:
         os.wait(pid)
 
