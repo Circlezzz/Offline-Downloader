@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 #-*- coding:utf-8 -*-
 
-import threading, requests, subprocess, json,socket
+import threading, requests, subprocess, json,socket,os
 
 port=26879  #sever listen port
 host=''     #listen client ip
@@ -11,7 +11,7 @@ commands_argv2_list='addUri addTorrent addMetalink'.split()
 commands_argv2='remove pause unpause'.split()
 commands_argv4='changePosition'.split()
 
-token='Aa111111'
+token='Passw0rd'
 
 #CheckStatus
 def CheckStatus(gid,token=''):
@@ -26,8 +26,22 @@ def CheckStatus(gid,token=''):
 
 #Start aria2 process
 def StartProcess():
-    child_process=subprocess.Popen(['/usr/bin/aria2c'])
-    return child_process
+    try:
+        child_process=os.fork()
+        if child_process==0:
+            grandson_process=subprocess.Popen(['/usr/bin/aria2c'])
+            grandson_process.wait()
+        else:
+            pass
+    except OSError:
+        raise(OSError('create process failed'))
+    except KeyboardInterrupt:
+        raise(KeyboardInterrupt('Interrupted by user'))
+    finally:
+        if child_process==0:
+            grandson_process.terminate()
+        else:
+            pass
 
 #Deal with command sent by client
 class GetCommand(threading.Thread):
@@ -96,7 +110,7 @@ def cmd_argv2(token,pid,cmd):
     r=requests.post('http://localhost:6800/jsonrpc',jsonreq)
     return r.text
 
-#command with 3 argv
+#command with 2 argv(list)
 def cmd_argv2_list(token,Uris,cmd):
     jsonreq = json.dumps({
         'jsonrpc': '2.0',
@@ -115,15 +129,12 @@ def cmd_argv4(token,gid,pos,how,cmd):
         'method': 'aria2.'+cmd,
         'params': ['token:' + token,gid,pos,how]
     })
-    r=requests.post('http://localhost:6800/jsonrpc',jsonreq)
+    r=requests.post('http://127.0.0.1:6800/jsonrpc',jsonreq)
     return r.text
 
-try:
-    child_process=StartProcess()
-    lock=threading.Lock()
-    listen_thread=GetCommand(lock,'ListenThread')
-    listen_thread.start()
-except KeyboardInterrupt:
-    raise(KeyboardInterrupt('interupted by user'))
-finally:
-    child_process.terminate()
+
+StartProcess()
+lock=threading.Lock()
+listen_thread=GetCommand(lock,'ListenThread')
+listen_thread.start()
+child_process.terminate()
