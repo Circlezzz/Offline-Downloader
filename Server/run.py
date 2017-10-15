@@ -6,11 +6,13 @@ import threading, requests, subprocess, json,socket,os,signal
 port=26879  #sever listen port
 host=''     #listen client ip
 
+#supported commands
 commands_argv1='pauseAll unpauseAll tellActive tellWaiting tellStopped'.split()
 commands_argv2_list='addUri addTorrent addMetalink'.split()
 commands_argv2='remove pause unpause'.split()
 commands_argv4='changePosition'.split()
 
+#secure token
 token='Passw0rd'
 
 #CheckStatus
@@ -67,7 +69,7 @@ class GetCommand(threading.Thread):
                     connection.send(result)
                 elif cmd[0] in commands_argv2_list:
                     result=cmd_argv2_list(token,cmd[1:],cmd[0])
-                    connection.send(result.encode('utf8'))
+                    connection.send(result)
                 elif cmd[0] in commands_argv4:
                     result=cmd_argv4(token,*cmd[1:],cmd[0])
                     connection.send(result)
@@ -96,7 +98,7 @@ def cmd_argv1(token,cmd):
         'params': ['token:' + token]
     })
     r=requests.post('http://localhost:6800/jsonrpc',jsonreq)
-    return r.text
+    return r.content
 
 #command with 2 argv
 def cmd_argv2(token,pid,cmd):
@@ -107,7 +109,7 @@ def cmd_argv2(token,pid,cmd):
         'params': ['token:' + token,pid]
     })
     r=requests.post('http://localhost:6800/jsonrpc',jsonreq)
-    return r.text
+    return r.content
 
 #command with 2 argv(list)
 def cmd_argv2_list(token,Uris,cmd):
@@ -118,7 +120,7 @@ def cmd_argv2_list(token,Uris,cmd):
         'params': ['token:' + token,Uris]
     })
     r=requests.post('http://localhost:6800/jsonrpc',jsonreq)
-    return r.text
+    return r.content
 
 #command with 4 argv
 def cmd_argv4(token,gid,pos,how,cmd):
@@ -129,7 +131,7 @@ def cmd_argv4(token,gid,pos,how,cmd):
         'params': ['token:' + token,gid,pos,how]
     })
     r=requests.post('http://127.0.0.1:6800/jsonrpc',jsonreq)
-    return r.text
+    return r.content
 
 
 child_process=StartProcess()
@@ -143,3 +145,4 @@ except KeyboardInterrupt:
     print('Interrupted by user')
 finally:
     os.kill(child_process,signal.SIGINT)
+    listen_thread.wait()
