@@ -35,7 +35,7 @@ def StartProcess():
         else:
             os._exit(0)
     else:
-        os.wait(pid)
+        os.wait()
 
 #Deal with command sent by client
 class GetCommand(threading.Thread):
