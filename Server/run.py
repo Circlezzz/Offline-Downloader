@@ -26,6 +26,7 @@ def CheckStatus(gid,token=''):
 
 #Start aria2 process
 def StartProcess():
+    grandson_process=None
     try:
         child_process=os.fork()
         if child_process==0:
