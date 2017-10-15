@@ -26,23 +26,16 @@ def CheckStatus(gid,token=''):
 
 #Start aria2 process
 def StartProcess():
-    grandson_process=None
-    try:
-        child_process=os.fork()
-        if child_process==0:
+    pid=os.fork()
+    if pid==0:
+        pid2=os.fork()
+        if pid2==0:
             grandson_process=subprocess.Popen(['/usr/bin/aria2c'])
             grandson_process.wait()
         else:
-            pass
-    except OSError:
-        raise(OSError('create process failed'))
-    except KeyboardInterrupt:
-        raise(KeyboardInterrupt('Interrupted by user'))
-    finally:
-        if child_process==0:
-            grandson_process.terminate()
-        else:
-            pass
+            os._exit()
+    else:
+        os.wait(pid)
 
 #Deal with command sent by client
 class GetCommand(threading.Thread):
@@ -134,8 +127,7 @@ def cmd_argv4(token,gid,pos,how,cmd):
     return r.text
 
 
-StartProcess()
+child_process=StartProcess()
 lock=threading.Lock()
 listen_thread=GetCommand(lock,'ListenThread')
 listen_thread.start()
-child_process.terminate()
