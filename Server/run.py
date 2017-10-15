@@ -34,13 +34,13 @@ def StartProcess():
             grandson_process=subprocess.Popen(['/usr/bin/aria2c'])
             grandson_process.wait()
         else:
-            os.write(wpip,pid2.encode())
+            os.write(wpip,str(pid2).encode('utf8'))
             os._exit(0)
     else:
         fobj=os.fdopen(rpip,'r')
         recv=os.read(rpip,32)
         os.wait()
-        return recv
+        return int(recv)
 
 #Deal with command sent by client
 class GetCommand(threading.Thread):
