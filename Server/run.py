@@ -82,6 +82,7 @@ class GetCommand(multiprocessing.Process):
         except KeyboardInterrupt:
                 print('Interrupted by user')
         finally:
+                sock.shutdown(2)
                 sock.close()
 # class SendInfo(threading.Thread):
 #     def __init__(self,lock,threadName):
