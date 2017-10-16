@@ -140,4 +140,7 @@ child_process=StartProcess()
 print(child_process)
 listen_process=GetCommand()
 listen_process.start()
-listen_process.join()
+try:
+    listen_process.join()
+except KeyboardInterrupt:
+    print('Interrupted by user')
