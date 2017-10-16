@@ -50,7 +50,7 @@ def StartProcess():
 #Deal with command sent by client
 class GetCommand(multiprocessing.process):
     def __init__(self):
-        super().__init__()
+        super().__init__(self)
 
     def run(self):
         sock=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
