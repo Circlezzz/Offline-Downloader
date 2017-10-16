@@ -60,7 +60,7 @@ class GetCommand(threading.Thread):
         global sock
         sock=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
         sock.bind((host,port))
-        sock.listen(1)
+        sock.listen(5)
         global run
         try:
             while run:
@@ -152,6 +152,4 @@ try:
 except KeyboardInterrupt:
     print('Interrupted by user')
 finally:
-    run=False
-    listen_thread.join()
     sock.close()
