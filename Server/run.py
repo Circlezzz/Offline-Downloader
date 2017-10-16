@@ -151,6 +151,7 @@ listen_thread.start()
 try:
     listen_thread.join()
 except KeyboardInterrupt:
+    sock.close()
     print('Interrupted by user')
 finally:
     #sock.close()
