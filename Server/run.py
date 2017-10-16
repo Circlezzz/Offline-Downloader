@@ -59,6 +59,7 @@ class GetCommand(threading.Thread):
     def run(self):
         global sock
         sock=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+        sock.allow_reuse_address = True
         sock.bind((host,port))
         sock.listen(5)
         global run
@@ -152,4 +153,4 @@ try:
 except KeyboardInterrupt:
     print('Interrupted by user')
 finally:
-    sock.close()
+    #sock.close()
