@@ -48,7 +48,7 @@ def StartProcess():
         return int(recv)
 
 #Deal with command sent by client
-class GetCommand(multiprocessing.process):
+class GetCommand(multiprocessing.Process):
     def __init__(self):
         super().__init__()
 
