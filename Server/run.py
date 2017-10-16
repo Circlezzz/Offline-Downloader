@@ -17,8 +17,7 @@ token='Passw0rd'
 
 #global bool for thread
 run=True
-connection=None
-address=None
+sock=None
 
 #CheckStatus
 def CheckStatus(gid,token=''):
@@ -58,14 +57,13 @@ class GetCommand(threading.Thread):
         super().__init__(name=threadName)
 
     def run(self):
+        global sock
         sock=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
         sock.bind((host,port))
         sock.listen(1)
         global run
         try:
             while run:
-                global connection
-                global address
                 connection,address=sock.accept()
                 data=connection.recv(1024)
                 data=data.decode('utf8')
@@ -87,8 +85,8 @@ class GetCommand(threading.Thread):
                     CheckStatus(cmd[1],token=token)
                 else:
                     pass
-        except Exception:
-                print('Error occurred')
+        except OSError:
+                print('Error in thread')
         finally:
                 sock.close()
 # class SendInfo(threading.Thread):
@@ -147,6 +145,7 @@ def cmd_argv4(token,gid,pos,how,cmd):
 child_process=StartProcess()
 print(child_process)
 listen_thread=GetCommand('ListenThread')
+listen_thread.setDaemon(True)
 listen_thread.start()
 try:
     listen_thread.join()
@@ -154,5 +153,5 @@ except KeyboardInterrupt:
     print('Interrupted by user')
 finally:
     run=False
-    connection.send('Interrupt'.encode('utf8'))
     listen_thread.join()
+    sock.close()
