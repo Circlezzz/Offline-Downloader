@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 #-*- coding:utf-8 -*-
 
-import threading, requests, subprocess, json,socket,os,signal
+import threading, requests, subprocess, json,socket,os,signal,multiprocessing
 
 port=26879  #sever listen port
 host=''     #listen client ip
@@ -14,10 +14,6 @@ commands_argv4='changePosition'.split()
 
 #secure token
 token='Passw0rd'
-
-#global bool for thread
-run=True
-sock=None
 
 #CheckStatus
 def CheckStatus(gid,token=''):
@@ -52,18 +48,16 @@ def StartProcess():
         return int(recv)
 
 #Deal with command sent by client
-class GetCommand(threading.Thread):
-    def __init__(self,threadName):
-        super().__init__(name=threadName)
+class GetCommand(multiprocessing.process):
+    def __init__(self):
+        super().__init__()
 
     def run(self):
-        global sock
         sock=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
         sock.bind((host,port))
         sock.listen(5)
-        global run
         try:
-            while run:
+            while True:
                 connection,address=sock.accept()
                 data=connection.recv(1024)
                 data=data.decode('utf8')
@@ -85,8 +79,8 @@ class GetCommand(threading.Thread):
                     CheckStatus(cmd[1],token=token)
                 else:
                     pass
-        except OSError:
-                print('Error in thread')
+        except KeyboardInterrupt:
+                print('Interrupted by user')
         finally:
                 sock.close()
 # class SendInfo(threading.Thread):
@@ -144,14 +138,6 @@ def cmd_argv4(token,gid,pos,how,cmd):
 
 child_process=StartProcess()
 print(child_process)
-listen_thread=GetCommand('ListenThread')
-listen_thread.setDaemon(True)
-listen_thread.start()
-try:
-    listen_thread.join()
-except KeyboardInterrupt:
-    sock.close()
-    print('Interrupted by user')
-finally:
-    pass
-    #sock.close()
+listen_process=GetCommand()
+listen_process.start()
+listen_process.join()
