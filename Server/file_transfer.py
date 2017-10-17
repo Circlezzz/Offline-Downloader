@@ -10,7 +10,7 @@ def runServer():
     authorizer=DummyAuthorizer()
     authorizer.add_user('PyOdUsEr','mG3Lfvl-!#','/data/downloads','elradfmwM')
     # handler=TLS_FTPHandler
-    # handler.certfile='/res/server.pem'
+    # handler.certfile='/res/server.pem'S
     handler=FTPHandler
     handler.authorizer=authorizer
     handler.passive_ports=range(2222,3333)
