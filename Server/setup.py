@@ -4,7 +4,7 @@
 import subprocess, requests
 import p_conf
 
-status = subprocess.call(['mkdir', '/root/.aria2'], shell=False)
+status = subprocess.call(['mkdir', p_conf.user_home+'/.aria2'], shell=False)
 print('Downloading aria2')
 url = 'https://github.com/q3aql/aria2-static-builds/releases/download/v1.32.0/aria2-1.32.0-linux-gnu-64bit-build1.tar.bz2'
 r = requests.get(url)

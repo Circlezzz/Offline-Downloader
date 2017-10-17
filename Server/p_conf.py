@@ -3,6 +3,8 @@
 
 import requests
 
+download_directory='/data/downloads'
+user_home='/root'
 
 def make_conf():
     print('making configure file')
@@ -24,5 +26,6 @@ def make_conf():
 
     with open('./res/aria2_temp.conf', 'r') as file:
         content = file.read()
-        with open('/root/.aria2/aria2.conf', 'w') as file2:
+        content.replace('dir=/data/downloads','dir='+download_directory)
+        with open(user_home+'/.aria2/aria2.conf', 'w') as file2:
             file2.write(content + 'bt-tracker=' + ','.join(l))
