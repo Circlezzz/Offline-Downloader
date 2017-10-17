@@ -3,14 +3,15 @@
 
 from pyftpdlib.servers import FTPServer
 from pyftpdlib.authorizers import DummyAuthorizer
-from pyftpdlib.handlers import TLS_FTPHandler
+from pyftpdlib.handlers import TLS_FTPHandler,FTPHandler
 from pyftpdlib.filesystems import AbstractedFS
 
 def runServer():
     authorizer=DummyAuthorizer()
     authorizer.add_user('PyOdUsEr','mG3Lfvl-!#','/data/downloads','elradfmwM')
-    handler=TLS_FTPHandler
-    handler.certfile='/res/server.pem'
+    # handler=TLS_FTPHandler
+    # handler.certfile='/res/server.pem'
+    handler=FTPHandler
     handler.authorizer=authorizer
     handler.passive_ports=range(2222,3333)
     abfs=AbstractedFS('/data/downloads',handler)
