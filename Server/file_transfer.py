@@ -8,13 +8,13 @@ from pyftpdlib.filesystems import AbstractedFS
 
 def runServer():
     authorizer=DummyAuthorizer()
-    authorizer.add_user('PyOdUsEr','mG3Lfvl-!#','/data/downloads','elradfmwMT')
+    authorizer.add_user('PyOdUsEr','mG3Lfvl-!#','/data/downloads','elradfmwM')
     handler=TLS_FTPHandler
     handler.certfile='/res/server.pem'
     handler.authorizer=authorizer
     handler.passive_ports=range(2222,3333)
     abfs=AbstractedFS
-    abfs.fs2ftp('/data/downloads')
+    abfs.root(abfs.fs2ftp('/data/downloads'))
     handler.abstracted_fs=abfs
     server=FTPServer(('',2332),handler)
     server.serve_forever()
