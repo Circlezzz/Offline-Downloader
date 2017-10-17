@@ -39,7 +39,7 @@ def StartProcess():
             except KeyboardInterrupt:
                 print('Interrupted by user')
         else:
-            os.write(wpip,str(pid2).encode('utf8'))
+            #os.write(wpip,str(pid2).encode('utf8'))
             os._exit(0)
     else:
         # fobj=os.fdopen(rpip,'r')
