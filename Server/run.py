@@ -28,11 +28,11 @@ def CheckStatus(gid,token=''):
 
 #Start aria2 process
 def StartProcess():
-    rpip,wpip=os.pipe()
-    pid=os.fork()
-    if pid==0:
+    # rpip,wpip=os.pipe()
+    pid=os.fork()   #fork twice to avoid defunct process
+    if pid==0:#subprocess
         pid2=os.fork()
-        if pid2==0:
+        if pid2==0:#grandson process
             grandson_process=subprocess.Popen(['/usr/bin/aria2c'])
             try:
                 grandson_process.wait()
@@ -42,10 +42,11 @@ def StartProcess():
             os.write(wpip,str(pid2).encode('utf8'))
             os._exit(0)
     else:
-        fobj=os.fdopen(rpip,'r')
-        recv=os.read(rpip,32)
+        # fobj=os.fdopen(rpip,'r')
+        # recv=os.read(rpip,32)
         os.wait()
-        return int(recv)
+        # return int(recv)
+
 
 #Deal with command sent by client
 class GetCommand(multiprocessing.Process):
@@ -137,8 +138,7 @@ def cmd_argv4(token,gid,pos,how,cmd):
     return r.content
 
 
-child_process=StartProcess()
-print(child_process)
+StartProcess()
 listen_process=GetCommand()
 listen_process.start()
 try:
