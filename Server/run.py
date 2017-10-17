@@ -38,14 +38,14 @@ def StartProcess():
                 grandson_process.wait()
             except KeyboardInterrupt:
                 print('Interrupted by user')
+                os._exit(0)
         else:
             #os.write(wpip,str(pid2).encode('utf8'))
-            #os._exit(0)
-            pass
+            os._exit(0)
     else:
         # fobj=os.fdopen(rpip,'r')
         # recv=os.read(rpip,32)
-        os.wait(pid)
+        os.wait()
         # return int(recv)
 
 
@@ -87,6 +87,7 @@ class GetCommand(multiprocessing.Process):
                 time.sleep(1)
                 sock.shutdown(2)
                 sock.close()
+                os._exit(0)
 # class SendInfo(threading.Thread):
 #     def __init__(self,lock,threadName):
 #         super().__init__(self,threadName)
