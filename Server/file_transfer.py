@@ -13,8 +13,7 @@ def runServer():
     handler.certfile='/res/server.pem'
     handler.authorizer=authorizer
     handler.passive_ports=range(2222,3333)
-    abfs=AbstractedFS
-    abfs.root(abfs.fs2ftp('/data/downloads'))
+    abfs=AbstractedFS('/data/downloads')
     handler.abstracted_fs=abfs
     server=FTPServer(('',2332),handler)
     server.serve_forever()
