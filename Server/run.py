@@ -9,7 +9,7 @@ host=''     #listen client ip
 #supported commands
 commands_argv1='pauseAll unpauseAll tellActive tellWaiting tellStopped'.split()
 commands_argv2_list='addUri addTorrent addMetalink'.split()
-commands_argv2='remove pause unpause'.split()
+commands_argv2='remove pause unpause tellStatus'.split()
 commands_argv4='changePosition'.split()
 
 #secure token
@@ -80,7 +80,7 @@ class GetCommand(multiprocessing.Process):
                 elif cmd[0]=='tellStatus':
                     CheckStatus(cmd[1],token=token)
                 else:
-                    pass
+                    connection.send('Wrong command'.encode('utf8'))
         except KeyboardInterrupt:
                 print('Interrupted by user')
         finally:

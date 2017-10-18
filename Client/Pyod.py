@@ -25,7 +25,7 @@ class Main(QMainWindow):
         self.taskTable.setColumnCount(4)
         self.taskTable.horizontalHeader().setStretchLastSection(True)
         self.taskTable.setSelectionBehavior(QAbstractItemView.SelectRows)
-        header = ['File Name', 'Size', 'Status', 'Download Process']
+        header = ['File Name', 'Size', 'Offline Status', 'Download Process']
         self.taskTable.setHorizontalHeaderLabels(header)
         self.taskTable.setMinimumSize(1000, 600)
         self.taskTable.setColumnWidth(0, 300)
@@ -94,9 +94,6 @@ class Main(QMainWindow):
                 self.taskTable.setItem(i,1,sizeitm)
                 self.taskTable.setItem(i,2,statusitem)
                 self.taskTable.setCellWidget(i,3,QProgressBar(self.taskTable))
-
-
-
 
 
 if __name__ == '__main__':

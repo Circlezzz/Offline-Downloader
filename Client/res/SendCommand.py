@@ -16,6 +16,9 @@ def SendCommand(cmds):
     return data
 
 
-SendCommand(
-    'addUri https://github.com/JustArchi/ArchiSteamFarm/releases/download/3.0.3.6/ASF-linux-x64.zip'
-)
+if __name__ == '__main__':
+    # print(
+    #     SendCommand(
+    #         'addUri https://github.com/JustArchi/ArchiSteamFarm/releases/download/3.0.3.6/ASF-linux-x64.zip'
+    #     ))
+    print(SendCommand('tellStatus 9e8c9259a1ca02f7'))
