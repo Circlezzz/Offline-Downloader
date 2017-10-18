@@ -60,6 +60,7 @@ class GetCommand(multiprocessing.Process):
             self.sock.bind((host,port))
         except OSError:
             print('Trying to bind socket...')
+            sleep(5)
             self.bindsocket()
 
     def run(self):
