@@ -34,6 +34,7 @@ def StartProcess():
         pid2=os.fork()
         if pid2==0:#grandson process
             grandson_process=subprocess.Popen(['/usr/bin/aria2c'])
+            grandson_process.pid
             try:
                 grandson_process.wait()
             except KeyboardInterrupt:
@@ -53,14 +54,21 @@ def StartProcess():
 class GetCommand(multiprocessing.Process):
     def __init__(self):
         super().__init__()
+    
+    def bindsocket(self):
+        try:
+            self.sock.bind((host,port))
+        except OSError:
+            print('Trying to bind socket...')
+            self.bindsocket()
 
     def run(self):
-        sock=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
-        sock.bind((host,port))
-        sock.listen(5)
+        self.sock=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+        self.bindsocket()
+        self.sock.listen(5)
         try:
             while True:
-                connection,address=sock.accept()
+                connection,address=self.sock.accept()
                 data=connection.recv(1024)
                 data=data.decode('utf8')
                 cmd=data.split()
@@ -85,8 +93,8 @@ class GetCommand(multiprocessing.Process):
                 print('Interrupted by user')
         finally:
                 time.sleep(1)
-                sock.shutdown(2)
-                sock.close()
+                self.sock.shutdown(2)
+                self.sock.close()
                 os._exit(0)
 # class SendInfo(threading.Thread):
 #     def __init__(self,lock,threadName):
