@@ -21,4 +21,4 @@ if __name__ == '__main__':
     #     SendCommand(
     #         'addUri https://github.com/JustArchi/ArchiSteamFarm/releases/download/3.0.3.6/ASF-linux-x64.zip'
     #     ))
-    print(SendCommand('tellStatus 9e8c9259a1ca02f7'))
+    print(SendCommand('tellStatus fda533da6486d0a4'))

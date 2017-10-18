@@ -8,6 +8,8 @@ import sys
 import res.Getfile
 from res.connectionSetup import loginWidget
 from res.Getfile import openFtp
+import json
+import os
 
 
 class Main(QMainWindow):
@@ -39,12 +41,18 @@ class Main(QMainWindow):
 
         self.taskTable.setContextMenuPolicy(Qt.CustomContextMenu)
         self.popMenu = QMenu(self.taskTable)
-        StartDownload = QAction('Start', self.taskTable)
-        PauseDownload = QAction('Pause', self.taskTable)
-        DeleteDownload = QAction('Delete', self.taskTable)
-        self.popMenu.addAction(StartDownload)
-        self.popMenu.addAction(PauseDownload)
-        self.popMenu.addAction(DeleteDownload)
+        Start_Server_Download = QAction('Start Offline Download', self.taskTable)
+        Pause_Server_Download = QAction('Pause Offline Download', self.taskTable)
+        Start_Local_Download=QAction('Start Retrieve',self.taskTable)
+        Pause_Local_Download=QAction('Pause Retrieve',self.taskTable)
+        Delete_Local_Download=QAction('Delete From List',self.taskTable)
+        Delete_Server_Download = QAction('Delete From Server', self.taskTable)
+        self.popMenu.addAction(Start_Server_Download)
+        self.popMenu.addAction(Pause_Server_Download)
+        self.popMenu.addAction(Start_Local_Download)
+        self.popMenu.addAction(Pause_Local_Download)
+        self.popMenu.addAction(Delete_Server_Download)
+        self.popMenu.addAction(Delete_Local_Download)
         self.taskTable.customContextMenuRequested.connect(self.showMenu)
 
         menu=self.menuBar()
@@ -56,18 +64,25 @@ class Main(QMainWindow):
         LoginAct.triggered.connect(self.showLoginWidget)
 
         self.ftp=None
+        self.userinfo=None
+        if os.path.exists('./res/serverInfo.json'):
+            with open('./res/serverInfo.json') as file:
+                self.userinfo=json.load(file)
 
     def showMenu(self, pos):
         self.currentIndex = self.taskTable.indexAt(pos).row()
         self.popMenu.exec_(QCursor.pos())
     
     def showLoginWidget(self):
-        if self.LoginWidget:
-            self.LoginWidget.show()
-        else:
+        if not self.LoginWidget:
             self.LoginWidget=loginWidget()
             self.LoginWidget.ApplyBtn.clicked.connect(self.login)
-            self.LoginWidget.show()
+        if self.userinfo:
+            self.LoginWidget.IPLineEdit.setText(self.userinfo['ip'])
+            self.LoginWidget.portLineEdit.setText(self.userinfo['port'])
+            self.LoginWidget.UsernameLineEdit.setText(self.userinfo['username'])
+            self.LoginWidget.PasswdLineEdit.setText(self.userinfo['passwd'])
+        self.LoginWidget.show()
 
     def login(self):
         self.ip=self.LoginWidget.IPLineEdit.text()
@@ -75,10 +90,14 @@ class Main(QMainWindow):
         self.username=self.LoginWidget.UsernameLineEdit.text()
         self.port=int(self.LoginWidget.portLineEdit.text())
         try:
+            print(self.ip,self.port,self.username,self.passwd)
             self.ftp=openFtp(self.ip,self.port,self.username,self.passwd)
             self.getFileList()
         except OSError:
             QMessageBox.critical(self.LoginWidget,'Error','connection faild')
+        else:
+            with open('./res/serverInfo.json','w+') as file:
+                json.dump({'ip':self.ip,'port':self.port,'username':self.username,'passwd':self.passwd},file)
 
 
     def getFileList(self):
