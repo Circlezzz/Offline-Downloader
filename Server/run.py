@@ -9,7 +9,7 @@ host=''     #listen client ip
 #supported commands
 commands_argv1='pauseAll unpauseAll tellActive tellWaiting tellStopped'.split()
 commands_argv2_list='addUri addTorrent addMetalink'.split()
-commands_argv2='remove pause unpause tellStatus'.split()
+commands_argv2='remove pause unpause tellStatus removeDownloadResult'.split()
 commands_argv4='changePosition'.split()
 
 #secure token
