@@ -38,7 +38,7 @@ def StartariaProcess():
             try:
                 grandson_process.wait()
             except KeyboardInterrupt:
-                print('Interrupted by user')
+                print('Interrupted by user---------aria2')
                 os._exit(0)
         else:
             #os.write(wpip,str(pid2).encode('utf8'))
@@ -59,7 +59,7 @@ def StartFTPProcess():
             try:
                 runFTPServer()
             except KeyboardInterrupt:
-                print('Interrupted by user')
+                print('Interrupted by user----------FTP')
                 os._exit(0)
         else:
             #os.write(wpip,str(pid2).encode('utf8'))
@@ -117,7 +117,7 @@ class GetCommand(multiprocessing.Process):
                 else:
                     connection.send('Wrong command'.encode('utf8'))
         except KeyboardInterrupt:
-                print('Interrupted by user')
+                print('Interrupted by user-------socket')
         finally:
                 time.sleep(1)
                 self.sock.shutdown(2)
