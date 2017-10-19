@@ -19,7 +19,10 @@ def runFTPServer():
     # abfs=AbstractedFS('/data/downloads',handler)
     # handler.abstracted_fs=abfs
     server = FTPServer(('', 2332), handler)
-    server.serve_forever()
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        raise(KeyboardInterrupt())
 
 
 if __name__ == '__main__':
