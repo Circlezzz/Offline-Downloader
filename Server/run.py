@@ -88,6 +88,7 @@ class GetCommand(multiprocessing.Process):
     #         pass
 
     def run(self):
+        print(4)
         self.sock=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
         self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.sock.bind((host,port))
@@ -119,6 +120,7 @@ class GetCommand(multiprocessing.Process):
         except KeyboardInterrupt:
                 print('Interrupted by user-------socket')
         finally:
+                print('3')
                 time.sleep(1)
                 self.sock.shutdown(2)
                 self.sock.close()
