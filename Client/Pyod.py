@@ -56,10 +56,20 @@ class Main(QMainWindow):
         self.taskTable.customContextMenuRequested.connect(self.showMenu)
 
         menu=self.menuBar()
-        SettingMenu=QMenu('Setting',self)
+        SettingMenu=QMenu('&Setting',self)
         LoginAct=QAction('Login',self)
         SettingMenu.addAction(LoginAct)
         menu.addMenu(SettingMenu)
+        TaskMenu=QMenu('&New Task',self)
+        AddUriAct=QAction('Add Uri',self)
+        AddtorrentAct=QAction('Add Torrent',self)
+        TaskMenu.addActions([AddUriAct,AddtorrentAct])
+        menu.addMenu(TaskMenu)
+        AboutMenu=QMenu('&About',self)
+        AboutAct=QAction('About',self)
+        AboutMenu.addAction(AboutAct)
+        menu.addMenu(AboutMenu)
+
         self.LoginWidget=None
         LoginAct.triggered.connect(self.showLoginWidget)
 
@@ -76,6 +86,7 @@ class Main(QMainWindow):
     def showLoginWidget(self):
         if not self.LoginWidget:
             self.LoginWidget=loginWidget()
+            self.LoginWidget.setWindowModality(Qt.ApplicationModal)
             self.LoginWidget.ApplyBtn.clicked.connect(self.login)
         if self.userinfo:
             self.LoginWidget.IPLineEdit.setText(self.userinfo['ip'])
