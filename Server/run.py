@@ -50,29 +50,29 @@ def StartariaProcess():
         # return int(recv)
 
 
-#Start FTP process
-def StartFTPProcess():
-    # rpip,wpip=os.pipe()
-    pid=os.fork()   #fork twice to avoid defunct process
-    if pid==0:#subprocess
-        pid2=os.fork()
-        if pid2==0:#grandson process
-            try:
-                runFTPServer()
-                print('5')
-            except KeyboardInterrupt:
-                print('Interrupted by user----------FTP')
-                os._exit(0)
-        else:
-            #os.write(wpip,str(pid2).encode('utf8'))
-            print('1')
-            os._exit(0)
-    else:
-        # fobj=os.fdopen(rpip,'r')
-        # recv=os.read(rpip,32)
-        os.wait()
-        print('2')
-        # return int(recv)
+# #Start FTP process
+# def StartFTPProcess():
+#     # rpip,wpip=os.pipe()
+#     pid=os.fork()   #fork twice to avoid defunct process
+#     if pid==0:#subprocess
+#         pid2=os.fork()
+#         if pid2==0:#grandson process
+#             try:
+#                 runFTPServer()
+#                 print('5')
+#             except KeyboardInterrupt:
+#                 print('Interrupted by user----------FTP')
+#                 os._exit(0)
+#         else:
+#             #os.write(wpip,str(pid2).encode('utf8'))
+#             print('1')
+#             os._exit(0)
+#     else:
+#         # fobj=os.fdopen(rpip,'r')
+#         # recv=os.read(rpip,32)
+#         os.wait()
+#         print('2')
+#         # return int(recv)
 
 #Deal with command sent by client
 class GetCommand(multiprocessing.Process):
@@ -180,8 +180,10 @@ def cmd_argv4(token,gid,pos,how,cmd):
     return r.content
 
 StartariaProcess()
-StartFTPProcess()
-print('Process Started')
+# StartFTPProcess()
+# print('Process Started')
+ftp_process=multiprocessing.Process(target=runFTPServer)
+ftp_process.start()
 listen_process=GetCommand()
 listen_process.start()
 try:
