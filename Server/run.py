@@ -80,7 +80,7 @@ class GetCommand(multiprocessing.Process):
             self.sock.bind((host,port))
         except OSError:
             print('Trying to bind socket...')
-            sleep(5)
+            time.sleep(5)
             self.bindsocket()
 
     def run(self):
@@ -171,6 +171,7 @@ def cmd_argv4(token,gid,pos,how,cmd):
 
 StartariaProcess()
 StartFTPProcess()
+print('Process Started')
 listen_process=GetCommand()
 listen_process.start()
 try:
