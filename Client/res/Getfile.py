@@ -8,7 +8,7 @@ import shutil
 import os
 import signal
 
-ip = '192.168.122.165'
+ip = '192.168.204.128'
 port = 2332
 username = 'PyOdUsEr'
 passwd = 'mG3Lfvl-!#'

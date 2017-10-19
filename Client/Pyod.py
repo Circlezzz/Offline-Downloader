@@ -79,7 +79,7 @@ class Main(QMainWindow):
             self.LoginWidget.ApplyBtn.clicked.connect(self.login)
         if self.userinfo:
             self.LoginWidget.IPLineEdit.setText(self.userinfo['ip'])
-            self.LoginWidget.portLineEdit.setText(self.userinfo['port'])
+            self.LoginWidget.portLineEdit.setText(str(self.userinfo['port']))
             self.LoginWidget.UsernameLineEdit.setText(self.userinfo['username'])
             self.LoginWidget.PasswdLineEdit.setText(self.userinfo['passwd'])
         self.LoginWidget.show()
@@ -90,12 +90,13 @@ class Main(QMainWindow):
         self.username=self.LoginWidget.UsernameLineEdit.text()
         self.port=int(self.LoginWidget.portLineEdit.text())
         try:
-            print(self.ip,self.port,self.username,self.passwd)
+            #print(self.ip,self.port,self.username,self.passwd)
             self.ftp=openFtp(self.ip,self.port,self.username,self.passwd)
             self.getFileList()
         except OSError:
             QMessageBox.critical(self.LoginWidget,'Error','connection faild')
         else:
+            self.LoginWidget.close()
             with open('./res/serverInfo.json','w+') as file:
                 json.dump({'ip':self.ip,'port':self.port,'username':self.username,'passwd':self.passwd},file)
 
