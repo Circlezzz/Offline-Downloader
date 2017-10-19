@@ -63,11 +63,13 @@ def StartFTPProcess():
                 os._exit(0)
         else:
             #os.write(wpip,str(pid2).encode('utf8'))
+            print('1')
             os._exit(0)
     else:
         # fobj=os.fdopen(rpip,'r')
         # recv=os.read(rpip,32)
         os.wait()
+        print('2')
         # return int(recv)
 
 #Deal with command sent by client
