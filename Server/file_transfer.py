@@ -7,7 +7,7 @@ from pyftpdlib.handlers import TLS_FTPHandler, FTPHandler
 from pyftpdlib.filesystems import AbstractedFS
 
 
-def runServer():
+def runFTPServer():
     authorizer = DummyAuthorizer()
     authorizer.add_user('PyOdUsEr', 'mG3Lfvl-!#', '/data/downloads',
                         'elradfmwM')
@@ -23,4 +23,4 @@ def runServer():
 
 
 if __name__ == '__main__':
-    runServer()
+    runFTPServer()

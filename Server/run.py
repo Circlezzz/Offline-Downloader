@@ -2,6 +2,7 @@
 #-*- coding:utf-8 -*-
 
 import threading, requests, subprocess, json,socket,os,signal,multiprocessing,time
+from file_transfer import runFTPServer
 
 port=26879  #sever listen port
 host=''     #listen client ip
@@ -27,14 +28,13 @@ def CheckStatus(gid,token=''):
     return r.text
 
 #Start aria2 process
-def StartProcess():
+def StartariaProcess():
     # rpip,wpip=os.pipe()
     pid=os.fork()   #fork twice to avoid defunct process
     if pid==0:#subprocess
         pid2=os.fork()
         if pid2==0:#grandson process
             grandson_process=subprocess.Popen(['/usr/bin/aria2c'])
-            grandson_process.pid
             try:
                 grandson_process.wait()
             except KeyboardInterrupt:
@@ -49,6 +49,26 @@ def StartProcess():
         os.wait()
         # return int(recv)
 
+#Start FTP process
+def StartFTPProcess():
+    # rpip,wpip=os.pipe()
+    pid=os.fork()   #fork twice to avoid defunct process
+    if pid==0:#subprocess
+        pid2=os.fork()
+        if pid2==0:#grandson process
+            try:
+                runFTPServer()
+            except KeyboardInterrupt:
+                print('Interrupted by user')
+                os._exit(0)
+        else:
+            #os.write(wpip,str(pid2).encode('utf8'))
+            os._exit(0)
+    else:
+        # fobj=os.fdopen(rpip,'r')
+        # recv=os.read(rpip,32)
+        os.wait()
+        # return int(recv)
 
 #Deal with command sent by client
 class GetCommand(multiprocessing.Process):
@@ -150,9 +170,9 @@ def cmd_argv4(token,gid,pos,how,cmd):
     return r.content
 
 
-StartProcess()
 listen_process=GetCommand()
 listen_process.start()
+StartariaProcess()
 try:
     listen_process.join()
 except KeyboardInterrupt:
