@@ -173,6 +173,7 @@ def cmd_argv4(token,gid,pos,how,cmd):
 listen_process=GetCommand()
 listen_process.start()
 StartariaProcess()
+StartFTPProcess()
 try:
     listen_process.join()
 except KeyboardInterrupt:
