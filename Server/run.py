@@ -77,20 +77,20 @@ class GetCommand(multiprocessing.Process):
     def __init__(self):
         super().__init__()
     
-    def bindsocket(self):
-        try:
-            self.sock.bind((host,port))
-        except OSError:
-            print('Trying to bind socket...')
-            time.sleep(5)
-            self.bindsocket()
-        except KeyboardInterrupt:
-            pass
+    # def bindsocket(self):
+    #     try:
+    #         self.sock.bind((host,port))
+    #     except OSError:
+    #         print('Trying to bind socket...')
+    #         time.sleep(5)
+    #         self.bindsocket()
+    #     except KeyboardInterrupt:
+    #         pass
 
     def run(self):
         self.sock=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
         self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.bindsocket()
+        self.sock.bind((host,port))
         print('Socket binded')
         self.sock.listen(5)
         try:
