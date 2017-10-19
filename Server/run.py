@@ -169,11 +169,10 @@ def cmd_argv4(token,gid,pos,how,cmd):
     r=requests.post('http://127.0.0.1:6800/jsonrpc',jsonreq)
     return r.content
 
-
-listen_process=GetCommand()
-listen_process.start()
 StartariaProcess()
 StartFTPProcess()
+listen_process=GetCommand()
+listen_process.start()
 try:
     listen_process.join()
 except KeyboardInterrupt:
