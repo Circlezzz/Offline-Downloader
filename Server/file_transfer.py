@@ -22,6 +22,7 @@ def runFTPServer():
     try:
         server.serve_forever()
     except KeyboardInterrupt:
+        print('FTPPPPPPPPPPPPPPPPP')
         raise(KeyboardInterrupt())
 
 
