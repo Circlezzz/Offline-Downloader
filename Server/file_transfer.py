@@ -15,7 +15,7 @@ def runFTPServer():
     # handler.certfile='/res/server.pem'S
     handler = FTPHandler
     handler.authorizer = authorizer
-    handler.passive_ports = range(2222, 3333)
+    handler.passive_ports = range(2335, 2337)
     # abfs=AbstractedFS('/data/downloads',handler)
     # handler.abstracted_fs=abfs
     server = FTPServer(('', 2332), handler)
