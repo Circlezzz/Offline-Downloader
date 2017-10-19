@@ -84,10 +84,14 @@ class GetCommand(multiprocessing.Process):
             print('Trying to bind socket...')
             time.sleep(5)
             self.bindsocket()
+        except KeyboardInterrupt:
+            pass
 
     def run(self):
         self.sock=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+        self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.bindsocket()
+        print('Socket binded')
         self.sock.listen(5)
         try:
             while True:
