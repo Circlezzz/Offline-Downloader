@@ -58,6 +58,7 @@ def StartFTPProcess():
         if pid2==0:#grandson process
             try:
                 runFTPServer()
+                print('5')
             except KeyboardInterrupt:
                 print('Interrupted by user----------FTP')
                 os._exit(0)
