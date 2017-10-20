@@ -6,6 +6,7 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 import sys
 import res.Getfile
+from res.addUridialog import addUridlg
 from res.connectionSetup import loginWidget
 from res.Getfile import openFtp
 import json
@@ -72,6 +73,8 @@ class Main(QMainWindow):
         menu.addMenu(AboutMenu)
 
         self.LoginWidget=None
+        self.AddUridlg=None
+        self.AddTorrentdlg=None
         LoginAct.triggered.connect(self.showLogindlg)
         AddUriAct.triggered.connect(self.showAddUridlg)
         AddtorrentAct.triggered.connect(self.showAddTorrentdlg)
@@ -132,7 +135,10 @@ class Main(QMainWindow):
                 self.taskTable.setCellWidget(i,3,QProgressBar(self.taskTable))
     
     def showAddUridlg(self):
-        pass
+        if not self.AddUridlg:
+            self.AddUridlg=addUridlg(self)
+            self.AddUridlg.setModal(True)
+        self.AddUridlg.show()
 
     def showAddTorrentdlg(self):
         pass
