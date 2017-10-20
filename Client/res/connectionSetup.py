@@ -5,23 +5,24 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 import json
 
-class loginWidget(QWidget):
-    def __init__(self):
-        super().__init__()
+class loginWidget(QDialog):
+    def __init__(self,parent):
+        super().__init__(parent)
 
         self.InitUI()
 
     def InitUI(self):
         layout=QGridLayout(self)
         self.setLayout(layout)
-        self.UsernameLabel=QLabel('Username')
-        self.PasswdLabel=QLabel('Password')
-        self.IPLabel=QLabel('Server IP')
-        self.portLabel=QLabel('Server port')
-        self.UsernameLineEdit=QLineEdit()
-        self.PasswdLineEdit=QLineEdit()
-        self.IPLineEdit=QLineEdit()
-        self.portLineEdit=QLineEdit()
+        self.UsernameLabel=QLabel('Username',self)
+        self.PasswdLabel=QLabel('Password',self)
+        self.IPLabel=QLabel('Server IP',self)
+        self.portLabel=QLabel('Server port',self)
+        self.UsernameLineEdit=QLineEdit(self)
+        self.PasswdLineEdit=QLineEdit(self)
+        self.PasswdLineEdit.setEchoMode(QLineEdit.PasswordEchoOnEdit)
+        self.IPLineEdit=QLineEdit(self)
+        self.portLineEdit=QLineEdit(self)
         self.ApplyBtn=QPushButton('Apply')
         self.CancelBtn=QPushButton('Cancel')
         layout.addWidget(self.IPLabel,0,0)
@@ -34,7 +35,7 @@ class loginWidget(QWidget):
         layout.addWidget(self.PasswdLineEdit,3,1)
         layout.addWidget(self.ApplyBtn,5,0)
         layout.addWidget(self.CancelBtn,5,1)
-        self.setGeometry(QApplication.desktop().width()/2,QApplication.desktop().height()/2,400,300)
+        self.setFixedSize(240,180)
         self.CancelBtn.clicked.connect(self.quit)
     
     def quit(self):

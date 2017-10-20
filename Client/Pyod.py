@@ -67,11 +67,16 @@ class Main(QMainWindow):
         menu.addMenu(TaskMenu)
         AboutMenu=QMenu('&About',self)
         AboutAct=QAction('About',self)
-        AboutMenu.addAction(AboutAct)
+        AboutQtAct=QAction('About Qt',self)
+        AboutMenu.addActions([AboutAct,AboutQtAct])
         menu.addMenu(AboutMenu)
 
         self.LoginWidget=None
-        LoginAct.triggered.connect(self.showLoginWidget)
+        LoginAct.triggered.connect(self.showLogindlg)
+        AddUriAct.triggered.connect(self.showAddUridlg)
+        AddtorrentAct.triggered.connect(self.showAddTorrentdlg)
+        AboutAct.triggered.connect(self.showAboutmedlg)
+        AboutQtAct.triggered.connect(self.showAboutQtdlg)
 
         self.ftp=None
         self.userinfo=None
@@ -83,10 +88,10 @@ class Main(QMainWindow):
         self.currentIndex = self.taskTable.indexAt(pos).row()
         self.popMenu.exec_(QCursor.pos())
     
-    def showLoginWidget(self):
+    def showLogindlg(self):
         if not self.LoginWidget:
-            self.LoginWidget=loginWidget()
-            self.LoginWidget.setWindowModality(Qt.ApplicationModal)
+            self.LoginWidget=loginWidget(self)
+            self.LoginWidget.setModal(True)
             self.LoginWidget.ApplyBtn.clicked.connect(self.login)
         if self.userinfo:
             self.LoginWidget.IPLineEdit.setText(self.userinfo['ip'])
@@ -125,6 +130,18 @@ class Main(QMainWindow):
                 self.taskTable.setItem(i,1,sizeitm)
                 self.taskTable.setItem(i,2,statusitem)
                 self.taskTable.setCellWidget(i,3,QProgressBar(self.taskTable))
+    
+    def showAddUridlg(self):
+        pass
+
+    def showAddTorrentdlg(self):
+        pass
+
+    def showAboutmedlg(self):
+        pass
+
+    def showAboutQtdlg(self):
+        QMessageBox.aboutQt(self,'About Qt')
 
 
 if __name__ == '__main__':
