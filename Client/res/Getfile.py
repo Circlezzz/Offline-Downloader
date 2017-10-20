@@ -29,7 +29,7 @@ class Ftpops():
     def __init__(self, threadNum):
         # signal.signal(signal.SIGTERM,self.pauseDownload)
         self.threadNum = threadNum
-        self.paused=False
+        self.paused = False
 
     def beginDownload(self, fileName, savePath):
         filesize = self.getFilesize(fileName)
@@ -72,7 +72,7 @@ class Ftpops():
     # def pauseDownload(self):
     #     self.paused=True
     #     for d in Downloader:
-    #         os.kill(d.thread.pid,d.pause) 
+    #         os.kill(d.thread.pid,d.pause)
 
 
 class Downloader():
@@ -85,7 +85,7 @@ class Downloader():
         self.ftp = openFtp(ip, port, username, passwd)
         self.file = open(self.segName, 'a+b')
         #self.thread = threading.Thread(target=self.receive_thread)
-        self.thread=multiprocessing.Process(target=self.receive_thread)
+        self.thread = multiprocessing.Process(target=self.receive_thread)
         self.thread.start()
         # signal.signal(signal.SIGTERM,self.pause)
 
@@ -103,7 +103,7 @@ class Downloader():
         if os.path.getsize(self.segName) >= self.segSize:
             self.file.truncate(self.segSize)
             raise (Done)
-    
+
     # def pause(self):
     #     raise(Done)
 
