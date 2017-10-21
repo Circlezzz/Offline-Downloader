@@ -251,8 +251,10 @@ class Main(QMainWindow):
         gid=self.filesInfo.keys()[self.currentIndex]
         res.Sendcmd.SendCommand('remove '+gid,res.Sendcmd.server,res.Sendcmd.port)
         res.Sendcmd.SendCommand('removeDownloadResult '+gid,res.Sendcmd.server,res.Sendcmd.port)
+        res.Sendcmd.SendCommand('_delLocalFile_ '+self.filesInfo[gid],res.Sendcmd.server,res.Sendcmd.port)
         del self.filesInfo[gid]
         self.taskTable.removeRow(self.currentIndex)
+
 
     def closeEvent(self,event):
         if os.path.exists('./res/fileInfo.json'):
