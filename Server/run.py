@@ -116,11 +116,12 @@ class GetCommand(multiprocessing.Process):
                     result=cmd_argv4(token,*cmd[1:],cmd[0])
                     connection.send(result)
                 elif cmd[0] =='_delLocalFile_':
+                    flag=True
                     if len(cmd)==1:
-                        cmd[1]=None
-                    if os.path.exists(cmd[1]):
+                        flag=False
+                    if flag and os.path.exists(cmd[1]):
                         os.remove(cmd[1])
-                    if os.path.exists(cmd[1]+'.aria2'):
+                    if flag and os.path.exists(cmd[1]+'.aria2'):
                         os.remove(cmd[1]+'.aria2')
                     connection.send('Ok')
                 else:
