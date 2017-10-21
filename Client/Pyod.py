@@ -183,7 +183,12 @@ class Main(QMainWindow):
         self.AddUridlg.show()
 
     def AddNewUri(self):
-        gid=res.Sendcmd.SendCommand('addUri '+self.AddUridlg.UriLineEdit.text(),res.Sendcmd.server,res.Sendcmd.port)
+        data=res.Sendcmd.SendCommand('addUri '+self.AddUridlg.UriLineEdit.text(),res.Sendcmd.server,res.Sendcmd.port)
+        print(data)
+        j=json.loads(data)
+        print(j)
+        gid=j['result']
+        print(gid)
         data=res.Sendcmd.SendCommand('getFiles '+gid,res.Sendcmd.server,res.Sendcmd.port)
         print(data)
         j=json.loads(data)
