@@ -7,7 +7,7 @@ server = '192.168.122.165'
 port = 26879
 
 
-def SendCommand(cmds):
+def SendCommand(cmds,server,port):
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.connect((server, port))
     sock.send(cmds.encode('utf8'))

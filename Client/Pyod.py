@@ -17,6 +17,7 @@ import os
 class Main(QMainWindow):
     def __init__(self):
         super().__init__()
+        self.isConnected=False
 
         self.InitUI()
 
@@ -92,6 +93,12 @@ class Main(QMainWindow):
         if os.path.exists('./res/serverInfo.json'):
             with open('./res/serverInfo.json') as file:
                 self.userinfo = json.load(file)
+            self.ip = self.userinfo['ip']
+            self.passwd = self.userinfo['passwd']
+            self.username = self.userinfo['username']
+            self.port = int(self.userinfo['port'])
+            self.login()
+            self.getFileList()
 
     def showMenu(self, pos):
         self.currentIndex = self.taskTable.indexAt(pos).row()
@@ -113,12 +120,12 @@ class Main(QMainWindow):
                 self.userinfo['username'])
             self.LoginWidget.PasswdLineEdit.setText(self.userinfo['passwd'])
         self.LoginWidget.show()
-
-    def login(self):
         self.ip = self.LoginWidget.IPLineEdit.text()
         self.passwd = self.LoginWidget.PasswdLineEdit.text()
         self.username = self.LoginWidget.UsernameLineEdit.text()
         self.port = int(self.LoginWidget.portLineEdit.text())
+
+    def login(self):
         try:
             #print(self.ip,self.port,self.username,self.passwd)
             self.ftp = openFtp(self.ip, self.port, self.username, self.passwd)

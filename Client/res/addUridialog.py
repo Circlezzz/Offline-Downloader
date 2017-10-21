@@ -3,6 +3,9 @@
 
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
+from res.SendCommand import SendCommand
+from res.SendCommand import server
+from res.SendCommand import port
 
 
 class addUridlg(QDialog):
@@ -34,7 +37,7 @@ class addUridlg(QDialog):
         CancelBtn.clicked.connect(self.CancelPressed)
 
     def OkPressed(self):
-        pass
+        SendCommand('addUri '+self.UriLineEdit.text(),server,port)
 
     def CancelPressed(self):
         self.close()
