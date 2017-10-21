@@ -10,6 +10,7 @@ from res.addUridialog import addUridlg
 from res.connectionSetup import loginWidget
 from res.Getfile import openFtp
 from res.retriveDialog import retriveDlg
+import res.Sendcmd
 import json
 import os
 
@@ -27,10 +28,10 @@ class Main(QMainWindow):
         layout = QVBoxLayout(mainwidget)
         self.taskTable = QTableWidget(mainwidget)
         layout.addWidget(self.taskTable)
-        self.taskTable.setColumnCount(4)
+        self.taskTable.setColumnCount(5)
         self.taskTable.horizontalHeader().setStretchLastSection(True)
         self.taskTable.setSelectionBehavior(QAbstractItemView.SelectRows)
-        header = ['File Name', 'Size', 'Offline Status', 'Download Process']
+        header = ['File Name', 'Size', 'Offline Status','Offline Process', 'Download Process']
         self.taskTable.setHorizontalHeaderLabels(header)
         self.taskTable.setMinimumSize(1000, 600)
         self.taskTable.setColumnWidth(0, 300)
@@ -90,6 +91,11 @@ class Main(QMainWindow):
 
         self.ftp = None
         self.userinfo = None
+        self.filesInfo=dict()
+        self.timer=None
+        if os.path.exists('./res/fileInfo.json'):
+            with open('./res/serverInfo.json') as file:
+                self.filesInfo = json.load(file)            
         if os.path.exists('./res/serverInfo.json'):
             with open('./res/serverInfo.json') as file:
                 self.userinfo = json.load(file)
@@ -133,7 +139,8 @@ class Main(QMainWindow):
         except OSError:
             QMessageBox.critical(self.LoginWidget, 'Error', 'connection faild')
         else:
-            self.LoginWidget.close()
+            if self.LoginWidget:
+                self.LoginWidget.close()
             with open('./res/serverInfo.json', 'w+') as file:
                 json.dump({
                     'ip': self.ip,
@@ -141,27 +148,51 @@ class Main(QMainWindow):
                     'username': self.username,
                     'passwd': self.passwd
                 }, file)
+            self.timer=QTimer(self)
+            self.timer.timeout.connect(self.getFileList)
+            self.timer.start(3000)
 
     def getFileList(self):
+        self.taskTable.clearContents()
         if self.ftp:
             self.fileList = self.ftp.nlst()
+            for file in self.fileList:
+                if file.endswith('.aria2'):
+                    self.fileList.remove(file)
             for i, name in enumerate(self.fileList):
                 self.taskTable.insertRow(i)
                 self.ftp.voidcmd('TYPE I')
+                gid=self.filesInfo[name]
+                status=res.Sendcmd.SendCommand('getFiles '+gid,res.Sendcmd.server,res.Sendcmd.port)
                 nameitm = QTableWidgetItem(name)
-                sizeitm = QTableWidgetItem(str(self.ftp.size(name)))
-                statusitem = QTableWidgetItem('Done')
+                sizeitm = QTableWidgetItem(status['result'][0]['length'])
+                statusitem = QTableWidgetItem(status['result'][0]['uris'][0]['status'])
+                OfflineProcess=QTableWidgetItem(status['result'][0]['completedLength']+'/'+status['result'][0]['length'])
                 self.taskTable.setItem(i, 0, nameitm)
                 self.taskTable.setItem(i, 1, sizeitm)
                 self.taskTable.setItem(i, 2, statusitem)
-                self.taskTable.setCellWidget(i, 3, QProgressBar(
+                self.taskTable.setItem(i,3,OfflineProcess)
+                self.taskTable.setCellWidget(i, 4, QProgressBar(
                     self.taskTable))
 
     def showAddUridlg(self):
         if not self.AddUridlg:
             self.AddUridlg = addUridlg(self)
+            self.AddUridlg.OkBtn.clicked.connect(self.AddNewUri)
             self.AddUridlg.setModal(True)
         self.AddUridlg.show()
+
+    def AddNewUri(self):
+        gid=res.Sendcmd.SendCommand('addUri '+self.AddUridlg.UriLineEdit.text(),res.Sendcmd.server,res.Sendcmd.port)
+        data=res.Sendcmd.SendCommand('getFiles '+gid,res.Sendcmd.server,res.Sendcmd.port)
+        print(data)
+        j=json.loads(data)
+        filename=j['result'][0][path].split['/'][-1]
+        self.filesInfo.update({filename:gid})
+        with open('res/fileInfo.json','w+') as file:
+            json.dump(self.filesInfo,file)
+        self.AddUridlg.close()
+        self.getFileList()
 
     def showAddTorrentdlg(self):
         pass

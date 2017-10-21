@@ -3,7 +3,7 @@
 
 import requests, json, socket
 
-server = '192.168.122.165'
+server = '192.168.204.128'
 port = 26879
 
 
@@ -13,7 +13,7 @@ def SendCommand(cmds,server,port):
     sock.send(cmds.encode('utf8'))
     data = sock.recv(1024)
     sock.close()
-    return data
+    return data.decode('utf8')
 
 
 if __name__ == '__main__':

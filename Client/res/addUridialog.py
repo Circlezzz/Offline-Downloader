@@ -3,9 +3,7 @@
 
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
-from res.SendCommand import SendCommand
-from res.SendCommand import server
-from res.SendCommand import port
+from res.Sendcmd import SendCommand
 
 
 class addUridlg(QDialog):
@@ -21,23 +19,20 @@ class addUridlg(QDialog):
         self.UriLineEdit = QLineEdit(self)
         self.UriLineEdit.setPlaceholderText(
             'Uri or Magnet link, splite with a space')
-        OkBtn = QPushButton('Ok', self)
+        self.OkBtn = QPushButton('Ok', self)
         CancelBtn = QPushButton('Cancel', self)
         mainlayout.addWidget(UriLabel, 0, 0)
         mainlayout.addWidget(self.UriLineEdit, 0, 1)
 
         downlayout = QHBoxLayout()
-        downlayout.addWidget(OkBtn)
+        downlayout.addWidget(self.OkBtn)
         downlayout.addWidget(CancelBtn)
         downlayout.addStretch()
         mainlayout.addLayout(downlayout, 1, 1)
         self.setFixedSize(520, 100)
 
-        OkBtn.clicked.connect(self.OkPressed)
+        # OkBtn.clicked.connect(self.OkPressed)
         CancelBtn.clicked.connect(self.CancelPressed)
-
-    def OkPressed(self):
-        SendCommand('addUri '+self.UriLineEdit.text(),server,port)
 
     def CancelPressed(self):
         self.close()
