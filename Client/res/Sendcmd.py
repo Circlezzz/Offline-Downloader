@@ -7,7 +7,7 @@ server = '192.168.204.128'
 port = 26879
 
 
-def SendCommand(cmds,server,port):
+def SendCommand(cmds, server, port):
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.connect((server, port))
     sock.send(cmds.encode('utf8'))
@@ -17,8 +17,15 @@ def SendCommand(cmds,server,port):
 
 
 if __name__ == '__main__':
-    # print(
-    #     SendCommand(
-    #         'addUri https://github.com/JustArchi/ArchiSteamFarm/releases/download/3.0.3.6/ASF-linux-x64.zip'
-    #     ))
-    print(SendCommand('tellStatus fda533da6486d0a4'))
+    a = SendCommand('addUri https://github.com/JustArchi/ArchiSteamFarm/releases/download/3.0.3.6/ASF-linux-x64.zip',server,port)
+    import json
+    j=json.loads(a)
+    b=j['result']
+    import time
+
+    def test():
+        print(SendCommand('getFiles ' + b, server, port))
+        time.sleep(2)
+        test()
+
+    test()

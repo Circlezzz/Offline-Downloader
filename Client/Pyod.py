@@ -192,7 +192,7 @@ class Main(QMainWindow):
         data=res.Sendcmd.SendCommand('getFiles '+gid,res.Sendcmd.server,res.Sendcmd.port)
         print(data)
         j=json.loads(data)
-        filename=j['result'][0][path].split['/'][-1]
+        filename=j['result'][0]['path'].split['/'][-1]
         self.filesInfo.update({filename:gid})
         with open('res/fileInfo.json','w+') as file:
             json.dump(self.filesInfo,file)
