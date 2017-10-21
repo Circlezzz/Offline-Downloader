@@ -173,10 +173,7 @@ class Main(QMainWindow):
                     linkitm=QTableWidgetItem(status['result'][0]['uris'][0]['uri'])
                     nameitm = QTableWidgetItem(status['result'][0]['path'])
                     sizeitm = QTableWidgetItem(status['result'][0]['length'])
-                    if int(sizeitm.text()) ==0 or sizeitm.text()!=status['result'][0]['completedLength']:
-                        statusitem = QTableWidgetItem('Downloading')
-                    else:
-                        statusitem = QTableWidgetItem('Done')
+                    statusitem = QTableWidgetItem(self.filesInfo[gid][1])
                     OfflineProcess=QTableWidgetItem(status['result'][0]['completedLength']+'/'+status['result'][0]['length'])
                     self.taskTable.insertRow(i)
                     self.taskTable.setItem(i, 0, nameitm)
@@ -186,15 +183,14 @@ class Main(QMainWindow):
                     self.taskTable.setItem(i,4,OfflineProcess)
                     self.taskTable.setCellWidget(i, 5, QProgressBar(self.taskTable))
                 else:
+                    if int(status['result'][0]['length'])!=0 and status['result'][0]['length']==status['result'][0]['completedLength']:
+                        self.filesInfo[gid][1]='Done'
                     self.taskTable.item(i,1).setText(status['result'][0]['uris'][0]['uri'])
                     self.taskTable.item(i,0).setText(status['result'][0]['path'])
                     self.taskTable.item(i,2).setText(status['result'][0]['length'])
-                    if int(status['result'][0]['length'])==0 or status['result'][0]['length']!=status['result'][0]['completedLength']:
-                        self.taskTable.item(i,3).setText('Downloading')
-                    else:
-                        self.taskTable.item(i,3).setText('Done')                                              
+                    self.taskTable.item(i,3).setText(self.filesInfo[gid][1])                                             
                     self.taskTable.item(i,4).setText(status['result'][0]['completedLength']+'/'+status['result'][0]['length'])
-                    self.filesInfo[gid]=status['result'][0]['path']
+                    self.filesInfo[gid][0]=status['result'][0]['path']
 
                 
 
@@ -216,7 +212,7 @@ class Main(QMainWindow):
         print(data)
         j=json.loads(data)
         filename=j['result'][0]['path'].split('/')[-1]
-        self.filesInfo.update({gid:filename})
+        self.filesInfo.update({gid:[filename,'Downloading']})
         with open('res/fileInfo.json','w+') as file:
             json.dump(self.filesInfo,file)
         self.AddUridlg.close()
@@ -249,16 +245,18 @@ class Main(QMainWindow):
     def Start_Server_Download_slot(self):
         gid=list(self.filesInfo.keys())[self.currentIndex]
         res.Sendcmd.SendCommand('unpause '+gid,res.Sendcmd.server,res.Sendcmd.port)
+        self.filesInfo[gid][1]='Downloading'
 
     def Pause_Server_Download_slot(self):
         gid=list(self.filesInfo.keys())[self.currentIndex]
         res.Sendcmd.SendCommand('pause '+gid,res.Sendcmd.server,res.Sendcmd.port)
+        self.filesInfo[gid][1]='Paused'
 
     def Delete_Server_Download_slot(self):
         gid=list(self.filesInfo.keys())[self.currentIndex]
         res.Sendcmd.SendCommand('remove '+gid,res.Sendcmd.server,res.Sendcmd.port)
         res.Sendcmd.SendCommand('removeDownloadResult '+gid,res.Sendcmd.server,res.Sendcmd.port)
-        res.Sendcmd.SendCommand('_delLocalFile_ '+self.filesInfo[gid],res.Sendcmd.server,res.Sendcmd.port)
+        res.Sendcmd.SendCommand('_delLocalFile_ '+self.filesInfo[gid][1],res.Sendcmd.server,res.Sendcmd.port)
         del self.filesInfo[gid]
         self.taskTable.removeRow(self.currentIndex)
 
