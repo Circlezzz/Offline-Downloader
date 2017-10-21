@@ -12,6 +12,7 @@ def SendCommand(cmds, server, port):
     sock.connect((server, port))
     sock.send(cmds.encode('utf8'))
     data = sock.recv(1024)
+    sock.shutdown(2)
     sock.close()
     return data.decode('utf8')
 

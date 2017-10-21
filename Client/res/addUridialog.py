@@ -35,4 +35,5 @@ class addUridlg(QDialog):
         CancelBtn.clicked.connect(self.CancelPressed)
 
     def CancelPressed(self):
+        self.UriLineEdit.clear()
         self.close()

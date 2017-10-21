@@ -173,7 +173,10 @@ class Main(QMainWindow):
                     linkitm=QTableWidgetItem(status['result'][0]['uris'][0]['uri'])
                     nameitm = QTableWidgetItem(status['result'][0]['path'])
                     sizeitm = QTableWidgetItem(status['result'][0]['length'])
-                    statusitem = QTableWidgetItem(status['result'][0]['uris'][1]['status'])
+                    if int(sizeitm.text()) ==0 or sizeitm.text()!=status['result'][0]['completedLength']:
+                        statusitem = QTableWidgetItem('Downloading')
+                    else:
+                        statusitem = QTableWidgetItem('Done')
                     OfflineProcess=QTableWidgetItem(status['result'][0]['completedLength']+'/'+status['result'][0]['length'])
                     self.taskTable.insertRow(i)
                     self.taskTable.setItem(i, 0, nameitm)
@@ -186,7 +189,10 @@ class Main(QMainWindow):
                     self.taskTable.item(i,1).setText(status['result'][0]['uris'][0]['uri'])
                     self.taskTable.item(i,0).setText(status['result'][0]['path'])
                     self.taskTable.item(i,2).setText(status['result'][0]['length'])
-                    self.taskTable.item(i,3).setText(status['result'][0]['uris'][1]['status'])
+                    if int(status['result'][0]['length'])==0 or status['result'][0]['length']!=status['result'][0]['completedLength']:
+                        self.taskTable.item(i,3).setText('Downloading')
+                    else:
+                        self.taskTable.item(i,3).setText('Done')                                              
                     self.taskTable.item(i,4).setText(status['result'][0]['completedLength']+'/'+status['result'][0]['length'])
                     self.filesInfo[gid]=status['result'][0]['path']
 
@@ -214,6 +220,7 @@ class Main(QMainWindow):
         with open('res/fileInfo.json','w+') as file:
             json.dump(self.filesInfo,file)
         self.AddUridlg.close()
+        self.AddUridlg.UriLineEdit.clear()
         self.getFileList(repaint=True)
 
     def showAddTorrentdlg(self):
@@ -240,15 +247,15 @@ class Main(QMainWindow):
             pass
 
     def Start_Server_Download_slot(self):
-        gid=self.filesInfo.keys()[self.currentIndex]
+        gid=list(self.filesInfo.keys())[self.currentIndex]
         res.Sendcmd.SendCommand('unpause '+gid,res.Sendcmd.server,res.Sendcmd.port)
 
     def Pause_Server_Download_slot(self):
-        gid=self.filesInfo.keys()[self.currentIndex]
+        gid=list(self.filesInfo.keys())[self.currentIndex]
         res.Sendcmd.SendCommand('pause '+gid,res.Sendcmd.server,res.Sendcmd.port)
 
     def Delete_Server_Download_slot(self):
-        gid=self.filesInfo.keys()[self.currentIndex]
+        gid=list(self.filesInfo.keys())[self.currentIndex]
         res.Sendcmd.SendCommand('remove '+gid,res.Sendcmd.server,res.Sendcmd.port)
         res.Sendcmd.SendCommand('removeDownloadResult '+gid,res.Sendcmd.server,res.Sendcmd.port)
         res.Sendcmd.SendCommand('_delLocalFile_ '+self.filesInfo[gid],res.Sendcmd.server,res.Sendcmd.port)

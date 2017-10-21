@@ -95,7 +95,7 @@ class GetCommand(multiprocessing.Process):
         self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.sock.bind((host,port))
         print('Socket binded')
-        self.sock.listen(5)
+        self.sock.listen(20)
         try:
             while True:
                 connection,address=self.sock.accept()
