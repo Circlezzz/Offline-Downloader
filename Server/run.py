@@ -124,7 +124,7 @@ class GetCommand(multiprocessing.Process):
                         os.remove(cmd[1])
                     if flag and os.path.exists(cmd[1]+'.aria2'):
                         os.remove(cmd[1]+'.aria2')
-                    connection.send('Ok')
+                    connection.send('Ok'.encode('utf8'))
                 else:
                     connection.send('Wrong command'.encode('utf8'))
         except KeyboardInterrupt:
