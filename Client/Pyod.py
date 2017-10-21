@@ -13,6 +13,7 @@ from res.retriveDialog import retriveDlg
 import res.Sendcmd
 import json
 import os
+from collections import OrderedDict
 
 
 class Main(QMainWindow):
@@ -28,10 +29,10 @@ class Main(QMainWindow):
         layout = QVBoxLayout(mainwidget)
         self.taskTable = QTableWidget(mainwidget)
         layout.addWidget(self.taskTable)
-        self.taskTable.setColumnCount(5)
+        self.taskTable.setColumnCount(6)
         self.taskTable.horizontalHeader().setStretchLastSection(True)
         self.taskTable.setSelectionBehavior(QAbstractItemView.SelectRows)
-        header = ['File Name', 'Size', 'Offline Status','Offline Process', 'Download Process']
+        header = ['File Name','Link Address' ,'Size', 'Offline Status','Offline Process', 'Download Process']
         self.taskTable.setHorizontalHeaderLabels(header)
         self.taskTable.setMinimumSize(1000, 600)
         self.taskTable.setColumnWidth(0, 300)
@@ -59,6 +60,9 @@ class Main(QMainWindow):
         self.popMenu.addAction(self.Pause_Local_Download)
         self.popMenu.addAction(self.Delete_Server_Download)
         self.popMenu.addAction(self.Delete_Local_Download)
+        self.Start_Server_Download.triggered.connect(self.Start_Server_Download_slot)
+        self.Pause_Server_Download.triggered.connect(self.Pause_Server_Download_slot)
+        self.Delete_Server_Download.triggered.connect(self.Delete_Server_Download_slot)
         self.taskTable.customContextMenuRequested.connect(self.showMenu)
 
         self.retriveDlg=None
@@ -91,10 +95,10 @@ class Main(QMainWindow):
 
         self.ftp = None
         self.userinfo = None
-        self.filesInfo=dict()
+        self.filesInfo=OrderedDict()
         self.timer=None
         if os.path.exists('./res/fileInfo.json'):
-            with open('./res/serverInfo.json') as file:
+            with open('./res/fileInfo.json') as file:
                 self.filesInfo = json.load(file)            
         if os.path.exists('./res/serverInfo.json'):
             with open('./res/serverInfo.json') as file:
@@ -104,9 +108,11 @@ class Main(QMainWindow):
             self.username = self.userinfo['username']
             self.port = int(self.userinfo['port'])
             self.login()
-            self.getFileList()
+            self.getFileList(repaint=True)
 
     def showMenu(self, pos):
+        for action in self.popMenu.actions():
+            action.setEnabled(True)
         self.currentIndex = self.taskTable.indexAt(pos).row()
         if self.currentIndex <0:
             for action in self.popMenu.actions():
@@ -135,7 +141,7 @@ class Main(QMainWindow):
         try:
             #print(self.ip,self.port,self.username,self.passwd)
             self.ftp = openFtp(self.ip, self.port, self.username, self.passwd)
-            self.getFileList()
+            self.getFileList(repaint=True)
         except OSError:
             QMessageBox.critical(self.LoginWidget, 'Error', 'connection faild')
         else:
@@ -152,28 +158,39 @@ class Main(QMainWindow):
             self.timer.timeout.connect(self.getFileList)
             self.timer.start(3000)
 
-    def getFileList(self):
-        self.taskTable.clearContents()
+    def getFileList(self,repaint=False):
+        if repaint:
+            self.taskTable.clearContents()
+            for i in range(self.taskTable.rowCount()):
+                self.taskTable.removeRow(i)
         if self.ftp:
-            self.fileList = self.ftp.nlst()
-            for file in self.fileList:
-                if file.endswith('.aria2'):
-                    self.fileList.remove(file)
-            for i, name in enumerate(self.fileList):
-                self.taskTable.insertRow(i)
-                self.ftp.voidcmd('TYPE I')
-                gid=self.filesInfo[name]
-                status=res.Sendcmd.SendCommand('getFiles '+gid,res.Sendcmd.server,res.Sendcmd.port)
-                nameitm = QTableWidgetItem(name)
-                sizeitm = QTableWidgetItem(status['result'][0]['length'])
-                statusitem = QTableWidgetItem(status['result'][0]['uris'][0]['status'])
-                OfflineProcess=QTableWidgetItem(status['result'][0]['completedLength']+'/'+status['result'][0]['length'])
-                self.taskTable.setItem(i, 0, nameitm)
-                self.taskTable.setItem(i, 1, sizeitm)
-                self.taskTable.setItem(i, 2, statusitem)
-                self.taskTable.setItem(i,3,OfflineProcess)
-                self.taskTable.setCellWidget(i, 4, QProgressBar(
-                    self.taskTable))
+            for i,gid in enumerate(self.filesInfo.keys()):
+                # print(gid)
+                r=res.Sendcmd.SendCommand('getFiles '+gid,res.Sendcmd.server,res.Sendcmd.port)
+                status=json.loads(r)
+                # print(status)
+                if repaint:
+                    linkitm=QTableWidgetItem(status['result'][0]['uris'][0]['uri'])
+                    nameitm = QTableWidgetItem(status['result'][0]['path'])
+                    sizeitm = QTableWidgetItem(status['result'][0]['length'])
+                    statusitem = QTableWidgetItem(status['result'][0]['uris'][1]['status'])
+                    OfflineProcess=QTableWidgetItem(status['result'][0]['completedLength']+'/'+status['result'][0]['length'])
+                    self.taskTable.insertRow(i)
+                    self.taskTable.setItem(i, 0, nameitm)
+                    self.taskTable.setItem(i,1,linkitm)
+                    self.taskTable.setItem(i, 2, sizeitm)
+                    self.taskTable.setItem(i, 3, statusitem)
+                    self.taskTable.setItem(i,4,OfflineProcess)
+                    self.taskTable.setCellWidget(i, 5, QProgressBar(self.taskTable))
+                else:
+                    self.taskTable.item(i,1).setText(status['result'][0]['uris'][0]['uri'])
+                    self.taskTable.item(i,0).setText(status['result'][0]['path'])
+                    self.taskTable.item(i,2).setText(status['result'][0]['length'])
+                    self.taskTable.item(i,3).setText(status['result'][0]['uris'][1]['status'])
+                    self.taskTable.item(i,4).setText(status['result'][0]['completedLength']+'/'+status['result'][0]['length'])
+                    self.filesInfo[gid]=status['result'][0]['path']
+
+                
 
     def showAddUridlg(self):
         if not self.AddUridlg:
@@ -192,12 +209,12 @@ class Main(QMainWindow):
         data=res.Sendcmd.SendCommand('getFiles '+gid,res.Sendcmd.server,res.Sendcmd.port)
         print(data)
         j=json.loads(data)
-        filename=j['result'][0]['path'].split['/'][-1]
-        self.filesInfo.update({filename:gid})
+        filename=j['result'][0]['path'].split('/')[-1]
+        self.filesInfo.update({gid:filename})
         with open('res/fileInfo.json','w+') as file:
             json.dump(self.filesInfo,file)
         self.AddUridlg.close()
-        self.getFileList()
+        self.getFileList(repaint=True)
 
     def showAddTorrentdlg(self):
         pass
@@ -222,7 +239,29 @@ class Main(QMainWindow):
         else:
             pass
 
-    
+    def Start_Server_Download_slot(self):
+        gid=self.filesInfo.keys()[self.currentIndex]
+        res.Sendcmd.SendCommand('unpause '+gid,res.Sendcmd.server,res.Sendcmd.port)
+
+    def Pause_Server_Download_slot(self):
+        gid=self.filesInfo.keys()[self.currentIndex]
+        res.Sendcmd.SendCommand('pause '+gid,res.Sendcmd.server,res.Sendcmd.port)
+
+    def Delete_Server_Download_slot(self):
+        gid=self.filesInfo.keys()[self.currentIndex]
+        res.Sendcmd.SendCommand('remove '+gid,res.Sendcmd.server,res.Sendcmd.port)
+        res.Sendcmd.SendCommand('removeDownloadResult '+gid,res.Sendcmd.server,res.Sendcmd.port)
+        del self.filesInfo[gid]
+        self.taskTable.removeRow(self.currentIndex)
+
+    def closeEvent(self,event):
+        if os.path.exists('./res/fileInfo.json'):
+            if len(self.filesInfo):
+                with open('./res/fileInfo.json','w') as file:
+                    json.dump(self.filesInfo,file)
+            else:
+                os.remove('./res/fileInfo.json')
+        event.accept()
 
 
 if __name__ == '__main__':

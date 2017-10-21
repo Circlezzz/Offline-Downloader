@@ -17,15 +17,15 @@ commands_argv4='changePosition'.split()
 token='Passw0rd'
 
 #CheckStatus
-def CheckStatus(gid,token=''):
-    jsonreq = json.dumps({
-        'jsonrpc': '2.0',
-        'id': 'qwer',
-        'method': 'aria2.tellStatus',
-        'params': ['token:' + token, gid]
-    })
-    r=requests.post('http://localhost:6800/jsonrpc',jsonreq)
-    return r.text
+# def CheckStatus(gid,token=''):
+#     jsonreq = json.dumps({
+#         'jsonrpc': '2.0',
+#         'id': 'qwer',
+#         'method': 'aria2.tellStatus',
+#         'params': ['token:' + token, gid]
+#     })
+#     r=requests.post('http://localhost:6800/jsonrpc',jsonreq)
+#     return r.text
 
 #Start aria2 process
 def StartariaProcess():
@@ -115,8 +115,11 @@ class GetCommand(multiprocessing.Process):
                 elif cmd[0] in commands_argv4:
                     result=cmd_argv4(token,*cmd[1:],cmd[0])
                     connection.send(result)
-                elif cmd[0]=='tellStatus':
-                    CheckStatus(cmd[1],token=token)
+                elif cmd[0] =='_delLocalFile_':
+                    if os.path.exists(cmd[1]):
+                        os.remove(cmd[1])
+                    if os.path.exists(cmd[1]+'.aria2'):
+                        os.remove(cmd[1]+'.aria2')
                 else:
                     connection.send('Wrong command'.encode('utf8'))
         except KeyboardInterrupt:
