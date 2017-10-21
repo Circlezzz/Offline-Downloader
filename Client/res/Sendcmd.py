@@ -3,18 +3,30 @@
 
 import requests, json, socket
 
-server = '192.168.204.128'
+server = '192.168.204.129'
 port = 26879
 
 
 def SendCommand(cmds, server, port):
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.connect((server, port))
+    sock.settimeout(3)
+    try:
+        sock.connect((server, port))
+    except OSError:
+        print('Failed to connect')
+        return 'error'
+    finally:
+        sock.close() 
+
     sock.send(cmds.encode('utf8'))
-    data = sock.recv(1024)
-    sock.shutdown(2)
-    sock.close()
-    return data.decode('utf8')
+    try:
+        data = sock.recv(1024)
+    except socket.timeout:
+        return 'error'
+    else:
+        return data.decode('utf8')
+    finally:
+        sock.close()
 
 
 if __name__ == '__main__':
