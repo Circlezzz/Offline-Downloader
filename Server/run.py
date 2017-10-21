@@ -117,6 +117,7 @@ class GetCommand(multiprocessing.Process):
                     connection.send(result)
                 elif cmd[0] =='_delLocalFile_':
                     flag=True
+                    print(cmd)
                     if len(cmd)==1:
                         flag=False
                     if flag and os.path.exists(cmd[1]):

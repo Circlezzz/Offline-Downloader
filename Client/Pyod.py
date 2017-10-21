@@ -256,7 +256,7 @@ class Main(QMainWindow):
         gid=list(self.filesInfo.keys())[self.currentIndex]
         res.Sendcmd.SendCommand('remove '+gid,res.Sendcmd.server,res.Sendcmd.port)
         res.Sendcmd.SendCommand('removeDownloadResult '+gid,res.Sendcmd.server,res.Sendcmd.port)
-        res.Sendcmd.SendCommand('_delLocalFile_ '+self.filesInfo[gid][1],res.Sendcmd.server,res.Sendcmd.port)
+        res.Sendcmd.SendCommand('_delLocalFile_ '+self.filesInfo[gid][0],res.Sendcmd.server,res.Sendcmd.port)
         del self.filesInfo[gid]
         self.taskTable.removeRow(self.currentIndex)
 
