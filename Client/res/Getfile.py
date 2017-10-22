@@ -20,7 +20,7 @@ class Done(Exception):
 
 def openFtp(ip, port, username, passwd):
     ftp = ftplib.FTP()
-    ftp.connect(ip, port)
+    ftp.connect(ip, port,timeout=2)
     ftp.login(username, passwd)
     return ftp
 

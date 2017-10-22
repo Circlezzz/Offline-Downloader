@@ -3,13 +3,13 @@
 
 import requests, json, socket
 
-server = '192.168.204.129'
+server = '192.168.204.128'
 port = 26879
 
 
 def SendCommand(cmds, server, port):
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.settimeout(3)
+    sock.settimeout(2)
     try:
         sock.connect((server, port))
     except OSError:

@@ -111,7 +111,7 @@ class GetCommand(multiprocessing.Process):
                     connection.send(result)
                 elif cmd[0] in commands_argv2_list:
                     result=cmd_argv2_list(token,cmd[1:],cmd[0])
-                    connection.send(result))                
+                    connection.send(result)             
                 elif cmd[0] in commands_argv4:
                     result=cmd_argv4(token,*cmd[1:],cmd[0])
                     connection.send(result)

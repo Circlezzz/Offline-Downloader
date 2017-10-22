@@ -16,6 +16,8 @@ import os
 from collections import OrderedDict
 
 
+filesInfo=OrderedDict()
+
 class Main(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -95,7 +97,6 @@ class Main(QMainWindow):
 
         self.ftp = None
         self.userinfo = None
-        self.filesInfo=OrderedDict()
         self.timer=None
         # if os.path.exists('./res/fileInfo.json'):
         #     with open('./res/fileInfo.json') as file:
@@ -108,7 +109,6 @@ class Main(QMainWindow):
             self.username = self.userinfo['username']
             self.port = int(self.userinfo['port'])
             self.login()
-            self.getFileList(repaint=True)
 
     def showMenu(self, pos):
         for action in self.popMenu.actions():
@@ -132,87 +132,111 @@ class Main(QMainWindow):
                 self.userinfo['username'])
             self.LoginWidget.PasswdLineEdit.setText(self.userinfo['passwd'])
         self.LoginWidget.show()
-        self.ip = self.LoginWidget.IPLineEdit.text()
-        self.passwd = self.LoginWidget.PasswdLineEdit.text()
-        self.username = self.LoginWidget.UsernameLineEdit.text()
-        self.port = int(self.LoginWidget.portLineEdit.text())
 
     def login(self):
+        if self.LoginWidget:
+            self.ip = self.LoginWidget.IPLineEdit.text()
+            self.passwd = self.LoginWidget.PasswdLineEdit.text()
+            self.username = self.LoginWidget.UsernameLineEdit.text()
+            self.port = int(self.LoginWidget.portLineEdit.text())
         try:
-            #print(self.ip,self.port,self.username,self.passwd)
             self.ftp = openFtp(self.ip, self.port, self.username, self.passwd)
-            self.getFileList(repaint=True)
         except OSError:
             QMessageBox.critical(self.LoginWidget, 'Error', 'connection faild')
         else:
             if self.LoginWidget:
                 self.LoginWidget.close()
-            with open('./res/serverInfo.json', 'w+') as file:
-                json.dump({
+            self.userinfo={
                     'ip': self.ip,
                     'port': self.port,
                     'username': self.username,
                     'passwd': self.passwd
-                }, file)
+                }
+            with open('./res/serverInfo.json', 'w+') as file:
+                json.dump(self.userinfo, file)
+            self.updateThread=UpdateFileStatus()
             self.timer=QTimer(self)
-            self.timer.timeout.connect(self.getFileList)
+            self.timer.timeout.connect(self.updateThread.start)
+            self.update.NewData.connect(self.updateFilelist)
             self.timer.start(3000)
+            self.getFileList()
 
-    def getFileList(self,repaint=False):
-        if repaint:
-            self.taskTable.clearContents()
-            for i in range(self.taskTable.rowCount()):
-                self.taskTable.removeRow(i)
-        if self.ftp:
-            for i,gid in enumerate(self.filesInfo.keys()):
-                # print(gid)
-                r=res.Sendcmd.SendCommand('tellStatus '+gid,res.Sendcmd.server,res.Sendcmd.port)
-                if r!='error':
-                    status=json.loads(r)
-                    self.filesInfo[gid]=status
-                    filename=status['result']['files'][0]['path'].split('/')[-1]
-                    linkaddress=status['result']['files'][0]['uris'][0]['uri']
-                    size=status['result']['files'][0]['length']
-                    offlinestatus=status['result']['status']
-                    if int(size)==0:
-                        offlineprocess=str(format(0.00,'.2%'))
-                    else:
-                        offlineprocess=str(format(int(status['result']['completedLength'])/int(size),'.2%'))
-                    offlinespeed=status['result']['downloadSpeed']
-                    retrivespeed=''
-                    savepath=''
+    def updateFilelist(self,i,l,data):
+        if len(data):
+            status=data
+            gid=l[i]
+            filesInfo[gid]=status
+            filename=status['result']['files'][0]['path'].split('/')[-1]
+            linkaddress=status['result']['files'][0]['uris'][0]['uri']
+            size=status['result']['files'][0]['length']
+            offlinestatus=status['result']['status']
+            if int(size)==0:
+                offlineprocess=str(format(0.00,'.2%'))
+            else:
+                offlineprocess=str(format(int(status['result']['completedLength'])/int(size),'.2%'))
+            offlinespeed=status['result']['downloadSpeed']
+            retrivespeed=''
+            savepath=''
+            self.taskTable.item(i,0).setText(filename)
+            self.taskTable.item(i,1).setText(linkaddress)
+            self.taskTable.item(i,2).setText(size)
+            self.taskTable.item(i,3).setText(offlinestatus)                                             
+            self.taskTable.item(i,4).setText(offlineprocess)
+            self.taskTable.item(i,5).setText(offlinespeed)
+            self.taskTable.item(i,7).setText(retrivespeed)
+            self.taskTable.item(i,8).setText(savepath)
 
-                    # print(status)
-                    if repaint:
-                        filenameItem=QTableWidgetItem(filename)
-                        linkaddressItem=QTableWidgetItem(linkaddress)
-                        linkaddressItem.setToolTip(linkaddress)
-                        sizeItem=QTableWidgetItem(size)
-                        offlinestatusItem=QTableWidgetItem(offlinestatus)
-                        offlineprocessItem=QTableWidgetItem(offlineprocess)
-                        offlinespeedItem=QTableWidgetItem(offlinespeed)
-                        retrivespeedItem=QTableWidgetItem(retrivespeed)
-                        savepathItem=QTableWidgetItem(savepath)
+    def getFileList(self):
+        self.taskTable.clearContents()
+        for i in range(self.taskTable.rowCount()):
+            self.taskTable.removeRow(i)
+        for i,gid in enumerate(filesInfo.keys()):
+            r=res.Sendcmd.SendCommand('tellStatus '+gid,res.Sendcmd.server,res.Sendcmd.port)
+            if r!='error':
+                status=json.loads(r)
+                filesInfo[gid]=status
+                filename=status['result']['files'][0]['path'].split('/')[-1]
+                linkaddress=status['result']['files'][0]['uris'][0]['uri']
+                size=status['result']['files'][0]['length']
+                offlinestatus=status['result']['status']
+                if int(size)==0:
+                    offlineprocess=str(format(0.00,'.2%'))
+                else:
+                    offlineprocess=str(format(int(status['result']['completedLength'])/int(size),'.2%'))
+                offlinespeed=status['result']['downloadSpeed']
+                retrivespeed=''
+                savepath=''
+                filenameItem=QTableWidgetItem(filename)
+                linkaddressItem=QTableWidgetItem(linkaddress)
+                linkaddressItem.setToolTip(linkaddress)
+                sizeItem=QTableWidgetItem(size)
+                offlinestatusItem=QTableWidgetItem(offlinestatus)
+                offlineprocessItem=QTableWidgetItem(offlineprocess)
+                offlinespeedItem=QTableWidgetItem(offlinespeed)
+                retrivespeedItem=QTableWidgetItem(retrivespeed)
+                savepathItem=QTableWidgetItem(savepath)
 
-                        self.taskTable.insertRow(i)
-                        self.taskTable.setItem(i, 0, filenameItem)
-                        self.taskTable.setItem(i,1,linkaddressItem)
-                        self.taskTable.setItem(i, 2, sizeItem)
-                        self.taskTable.setItem(i, 3, offlinestatusItem)
-                        self.taskTable.setItem(i,4,offlineprocessItem)
-                        self.taskTable.setItem(i,5,offlinespeedItem)
-                        self.taskTable.setCellWidget(i, 6, QProgressBar(self.taskTable))
-                        self.taskTable.setItem(i,7,retrivespeedItem)
-                        self.taskTable.setItem(i,8,savepathItem)
-                    else:
-                        self.taskTable.item(i,0).setText(filename)
-                        self.taskTable.item(i,1).setText(linkaddress)
-                        self.taskTable.item(i,2).setText(size)
-                        self.taskTable.item(i,3).setText(offlinestatus)                                             
-                        self.taskTable.item(i,4).setText(offlineprocess)
-                        self.taskTable.item(i,5).setText(offlinespeed)
-                        self.taskTable.item(i,7).setText(retrivespeed)
-                        self.taskTable.item(i,8).setText(savepath)
+                self.taskTable.insertRow(i)
+                self.taskTable.setItem(i, 0, filenameItem)
+                self.taskTable.setItem(i,1,linkaddressItem)
+                self.taskTable.setItem(i, 2, sizeItem)
+                self.taskTable.setItem(i, 3, offlinestatusItem)
+                self.taskTable.setItem(i,4,offlineprocessItem)
+                self.taskTable.setItem(i,5,offlinespeedItem)
+                self.taskTable.setCellWidget(i, 6, QProgressBar(self.taskTable))
+                self.taskTable.setItem(i,7,retrivespeedItem)
+                self.taskTable.setItem(i,8,savepathItem)
+            else:
+                self.taskTable.insertRow(i)
+                self.taskTable.setItem(i, 0, QTableWidgetItem('Loading'))
+                self.taskTable.setItem(i,1,QTableWidgetItem('Loading'))
+                self.taskTable.setItem(i, 2, QTableWidgetItem('Loading'))
+                self.taskTable.setItem(i, 3, QTableWidgetItem('Loading'))
+                self.taskTable.setItem(i,4,QTableWidgetItem('Loading'))
+                self.taskTable.setItem(i,5,QTableWidgetItem('Loading'))
+                self.taskTable.setCellWidget(i, 6, QProgressBar(self.taskTable))
+                self.taskTable.setItem(i,7,QTableWidgetItem('Loading'))
+                self.taskTable.setItem(i,8,QTableWidgetItem('Loading'))
                 
 
     def showAddUridlg(self):
@@ -231,7 +255,7 @@ class Main(QMainWindow):
             # data=res.Sendcmd.SendCommand('getStatus '+gid,res.Sendcmd.server,res.Sendcmd.port)
             # print(data)
             j=json.loads(data)
-            self.filesInfo.update({gid:None})
+            filesInfo.update({gid:None})
             # with open('res/fileInfo.json','w+') as file:
             #     json.dump(self.filesInfo,file)
         self.AddUridlg.close()
@@ -264,21 +288,24 @@ class Main(QMainWindow):
     def Start_Server_Download_slot(self):
         gid=list(self.filesInfo.keys())[self.currentIndex]
         res.Sendcmd.SendCommand('unpause '+gid,res.Sendcmd.server,res.Sendcmd.port)
-        self.getFileList()
+        if self.updateThread.isFinished():
+            self.updateThread.start()
 
     def Pause_Server_Download_slot(self):
         gid=list(self.filesInfo.keys())[self.currentIndex]
         res.Sendcmd.SendCommand('pause '+gid,res.Sendcmd.server,res.Sendcmd.port)
-        self.getFileList()
+        if self.updateThread.isFinished():
+            self.updateThread.start()
 
     def Delete_Server_Download_slot(self):
-        gid=list(self.filesInfo.keys())[self.currentIndex]
+        gid=list(filesInfo.keys())[self.currentIndex]
         res.Sendcmd.SendCommand('remove '+gid,res.Sendcmd.server,res.Sendcmd.port)
         res.Sendcmd.SendCommand('removeDownloadResult '+gid,res.Sendcmd.server,res.Sendcmd.port)
         res.Sendcmd.SendCommand('_delLocalFile_ '+self.taskTable.item(self.currentIndex,0).text(),res.Sendcmd.server,res.Sendcmd.port)
-        del self.filesInfo[gid]
+        del filesInfo[gid]
         self.taskTable.removeRow(self.currentIndex)
-        self.getFileList()
+        if self.updateThread.isFinished():
+            self.updateThread.start()
 
 
     # def closeEvent(self,event):
@@ -289,6 +316,22 @@ class Main(QMainWindow):
     #         else:
     #             os.remove('./res/fileInfo.json')
     #     event.accept()
+
+
+
+class UpdateFileStatus(QThread):
+    def __init__(self):
+        super().__init__()
+        self.NewData=pyqtSignal(int,list,dict)
+
+    def run(self):
+        keys=list(filesInfo.keys())
+        for i,gid in enumerate(keys):
+            r=res.Sendcmd.SendCommand('tellStatus '+gid,res.Sendcmd.server,res.Sendcmd.port)
+            if r!='error':
+                self.NewData.emit(i,keys,json.loads(r))
+            else:
+                self.NewData.emit(i,list(),dict())
 
 
 if __name__ == '__main__':
