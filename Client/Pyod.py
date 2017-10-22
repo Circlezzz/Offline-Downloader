@@ -15,13 +15,13 @@ import json
 import os
 from collections import OrderedDict
 
+filesInfo = OrderedDict()
 
-filesInfo=OrderedDict()
 
 class Main(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.isConnected=False
+        self.isConnected = False
 
         self.InitUI()
 
@@ -34,7 +34,11 @@ class Main(QMainWindow):
         self.taskTable.setColumnCount(9)
         self.taskTable.horizontalHeader().setStretchLastSection(True)
         self.taskTable.setSelectionBehavior(QAbstractItemView.SelectRows)
-        header = ['File Name','Link Address' ,'Size', 'Offline Status','Offline Process','Offline Speed', 'Retrive Process','Retrive Speed','Save Path']
+        header = [
+            'File Name', 'Link Address', 'Size', 'Offline Status',
+            'Offline Process', 'Offline Speed', 'Retrive Process',
+            'Retrive Speed', 'Save Path'
+        ]
         self.taskTable.setHorizontalHeaderLabels(header)
         self.taskTable.setMinimumSize(1000, 600)
         # self.taskTable.setColumnWidth(0, 300)
@@ -49,25 +53,30 @@ class Main(QMainWindow):
         self.taskTable.setContextMenuPolicy(Qt.CustomContextMenu)
         self.popMenu = QMenu(self.taskTable)
         self.Start_Server_Download = QAction('Start Offline Download',
-                                        self.taskTable)
+                                             self.taskTable)
         self.Pause_Server_Download = QAction('Pause Offline Download',
-                                        self.taskTable)
+                                             self.taskTable)
         self.Start_Local_Download = QAction('Start Retrieve', self.taskTable)
         self.Pause_Local_Download = QAction('Pause Retrieve', self.taskTable)
-        self.Delete_Local_Download = QAction('Delete From List', self.taskTable)
-        self.Delete_Server_Download = QAction('Delete From Server', self.taskTable)
+        self.Delete_Local_Download = QAction('Delete From List',
+                                             self.taskTable)
+        self.Delete_Server_Download = QAction('Delete From Server',
+                                              self.taskTable)
         self.popMenu.addAction(self.Start_Server_Download)
         self.popMenu.addAction(self.Pause_Server_Download)
         self.popMenu.addAction(self.Delete_Server_Download)
         self.popMenu.addAction(self.Start_Local_Download)
         self.popMenu.addAction(self.Pause_Local_Download)
         self.popMenu.addAction(self.Delete_Local_Download)
-        self.Start_Server_Download.triggered.connect(self.Start_Server_Download_slot)
-        self.Pause_Server_Download.triggered.connect(self.Pause_Server_Download_slot)
-        self.Delete_Server_Download.triggered.connect(self.Delete_Server_Download_slot)
+        self.Start_Server_Download.triggered.connect(
+            self.Start_Server_Download_slot)
+        self.Pause_Server_Download.triggered.connect(
+            self.Pause_Server_Download_slot)
+        self.Delete_Server_Download.triggered.connect(
+            self.Delete_Server_Download_slot)
         self.taskTable.customContextMenuRequested.connect(self.showMenu)
 
-        self.retriveDlg=None
+        self.retriveDlg = None
         self.Start_Local_Download.triggered.connect(self.showLocalDownloadDlg)
 
         menu = self.menuBar()
@@ -97,12 +106,12 @@ class Main(QMainWindow):
 
         self.ftp = None
         self.userinfo = None
-        self.timer=None
+        self.timer = None
         if os.path.exists('./res/fileInfo.json'):
             with open('./res/fileInfo.json') as file:
                 filesInfo.update(json.load(file))
         else:
-            f=open('./res/fileInfo.json','w')
+            f = open('./res/fileInfo.json', 'w')
             f.close()
         if os.path.exists('./res/serverInfo.json'):
             with open('./res/serverInfo.json') as file:
@@ -117,15 +126,15 @@ class Main(QMainWindow):
         for action in self.popMenu.actions():
             action.setEnabled(True)
         self.currentIndex = self.taskTable.indexAt(pos).row()
-        if self.currentIndex <0:
+        if self.currentIndex < 0:
             for action in self.popMenu.actions():
                 action.setEnabled(False)
 
-        rows=[]
+        rows = []
         for itm in self.taskTable.selectionModel().selectedRows():
             rows.append(int(itm.row()))
         for r in rows:
-            if self.taskTable.item(r,3).text()!='complete':
+            if self.taskTable.item(r, 3).text() != 'complete':
                 self.popMenu.actions()[3].setEnabled(False)
                 self.popMenu.actions()[4].setEnabled(False)
                 self.popMenu.actions()[5].setEnabled(False)
@@ -159,98 +168,106 @@ class Main(QMainWindow):
         else:
             if self.LoginWidget:
                 self.LoginWidget.close()
-            self.userinfo={
-                    'ip': self.ip,
-                    'port': self.port,
-                    'username': self.username,
-                    'passwd': self.passwd
-                }
+            self.userinfo = {
+                'ip': self.ip,
+                'port': self.port,
+                'username': self.username,
+                'passwd': self.passwd
+            }
             with open('./res/serverInfo.json', 'w+') as file:
                 json.dump(self.userinfo, file)
-            self.updateThread=UpdateFileStatus()
-            self.timer=QTimer(self)
+            self.updateThread = UpdateFileStatus()
+            self.timer = QTimer(self)
             self.timer.timeout.connect(self.updateThread.start)
             self.updateThread.NewData.connect(self.updateFilelist)
             self.timer.start(3000)
             self.getFileList()
 
-    def updateFilelist(self,i,l,data):
+    def updateFilelist(self, i, l, data):
         if len(data):
-            status=data
-            gid=l[i]
-            filesInfo[gid]=status
-            filename=status['result']['files'][0]['path'].split('/')[-1]
-            linkaddress=status['result']['files'][0]['uris'][0]['uri']
-            size=status['result']['files'][0]['length']
-            offlinestatus=status['result']['status']
-            if int(size)==0:
-                offlineprocess=str(format(0.00,'.2%'))
+            status = data
+            gid = l[i]
+            filesInfo[gid] = status
+            filename = status['result']['files'][0]['path'].split('/')[-1]
+            linkaddress = status['result']['files'][0]['uris'][0]['uri']
+            size = status['result']['files'][0]['length']
+            offlinestatus = status['result']['status']
+            if int(size) == 0:
+                offlineprocess = str(format(0.00, '.2%'))
             else:
-                offlineprocess=str(format(int(status['result']['completedLength'])/int(size),'.2%'))
-            offlinespeed=status['result']['downloadSpeed']
-            retrivespeed=''
-            savepath=''
-            self.taskTable.item(i,0).setText(filename)
-            self.taskTable.item(i,1).setText(linkaddress)
-            self.taskTable.item(i,2).setText(size)
-            self.taskTable.item(i,3).setText(offlinestatus)                                             
-            self.taskTable.item(i,4).setText(offlineprocess)
-            self.taskTable.item(i,5).setText(offlinespeed)
-            self.taskTable.item(i,7).setText(retrivespeed)
-            self.taskTable.item(i,8).setText(savepath)
+                offlineprocess = str(
+                    format(
+                        int(status['result']['completedLength']) / int(size),
+                        '.2%'))
+            offlinespeed = status['result']['downloadSpeed']
+            retrivespeed = ''
+            savepath = ''
+            self.taskTable.item(i, 0).setText(filename)
+            self.taskTable.item(i, 1).setText(linkaddress)
+            self.taskTable.item(i, 2).setText(size)
+            self.taskTable.item(i, 3).setText(offlinestatus)
+            self.taskTable.item(i, 4).setText(offlineprocess)
+            self.taskTable.item(i, 5).setText(offlinespeed)
+            self.taskTable.item(i, 7).setText(retrivespeed)
+            self.taskTable.item(i, 8).setText(savepath)
 
     def getFileList(self):
         self.taskTable.clearContents()
         for i in range(self.taskTable.rowCount()):
             self.taskTable.removeRow(i)
-        for i,gid in enumerate(filesInfo.keys()):
-            r=res.Sendcmd.SendCommand('tellStatus '+gid,res.Sendcmd.server,res.Sendcmd.port)
-            if r!='error':
-                status=json.loads(r)
-                filesInfo[gid]=status
-                filename=status['result']['files'][0]['path'].split('/')[-1]
-                linkaddress=status['result']['files'][0]['uris'][0]['uri']
-                size=status['result']['files'][0]['length']
-                offlinestatus=status['result']['status']
-                if int(size)==0:
-                    offlineprocess=str(format(0.00,'.2%'))
+        for i, gid in enumerate(filesInfo.keys()):
+            r = res.Sendcmd.SendCommand('tellStatus ' + gid,
+                                        res.Sendcmd.server, res.Sendcmd.port)
+            if r != 'error':
+                status = json.loads(r)
+                filesInfo[gid] = status
+                filename = status['result']['files'][0]['path'].split('/')[-1]
+                linkaddress = status['result']['files'][0]['uris'][0]['uri']
+                size = status['result']['files'][0]['length']
+                offlinestatus = status['result']['status']
+                if int(size) == 0:
+                    offlineprocess = str(format(0.00, '.2%'))
                 else:
-                    offlineprocess=str(format(int(status['result']['completedLength'])/int(size),'.2%'))
-                offlinespeed=status['result']['downloadSpeed']
-                retrivespeed=''
-                savepath=''
-                filenameItem=QTableWidgetItem(filename)
-                linkaddressItem=QTableWidgetItem(linkaddress)
+                    offlineprocess = str(
+                        format(
+                            int(status['result']['completedLength']) /
+                            int(size), '.2%'))
+                offlinespeed = status['result']['downloadSpeed']
+                retrivespeed = ''
+                savepath = ''
+                filenameItem = QTableWidgetItem(filename)
+                linkaddressItem = QTableWidgetItem(linkaddress)
                 linkaddressItem.setToolTip(linkaddress)
-                sizeItem=QTableWidgetItem(size)
-                offlinestatusItem=QTableWidgetItem(offlinestatus)
-                offlineprocessItem=QTableWidgetItem(offlineprocess)
-                offlinespeedItem=QTableWidgetItem(offlinespeed)
-                retrivespeedItem=QTableWidgetItem(retrivespeed)
-                savepathItem=QTableWidgetItem(savepath)
+                sizeItem = QTableWidgetItem(size)
+                offlinestatusItem = QTableWidgetItem(offlinestatus)
+                offlineprocessItem = QTableWidgetItem(offlineprocess)
+                offlinespeedItem = QTableWidgetItem(offlinespeed)
+                retrivespeedItem = QTableWidgetItem(retrivespeed)
+                savepathItem = QTableWidgetItem(savepath)
 
                 self.taskTable.insertRow(i)
                 self.taskTable.setItem(i, 0, filenameItem)
-                self.taskTable.setItem(i,1,linkaddressItem)
+                self.taskTable.setItem(i, 1, linkaddressItem)
                 self.taskTable.setItem(i, 2, sizeItem)
                 self.taskTable.setItem(i, 3, offlinestatusItem)
-                self.taskTable.setItem(i,4,offlineprocessItem)
-                self.taskTable.setItem(i,5,offlinespeedItem)
-                self.taskTable.setCellWidget(i, 6, QProgressBar(self.taskTable))
-                self.taskTable.setItem(i,7,retrivespeedItem)
-                self.taskTable.setItem(i,8,savepathItem)
+                self.taskTable.setItem(i, 4, offlineprocessItem)
+                self.taskTable.setItem(i, 5, offlinespeedItem)
+                self.taskTable.setCellWidget(i, 6, QProgressBar(
+                    self.taskTable))
+                self.taskTable.setItem(i, 7, retrivespeedItem)
+                self.taskTable.setItem(i, 8, savepathItem)
             else:
                 self.taskTable.insertRow(i)
                 self.taskTable.setItem(i, 0, QTableWidgetItem('Loading'))
-                self.taskTable.setItem(i,1,QTableWidgetItem('Loading'))
+                self.taskTable.setItem(i, 1, QTableWidgetItem('Loading'))
                 self.taskTable.setItem(i, 2, QTableWidgetItem('Loading'))
                 self.taskTable.setItem(i, 3, QTableWidgetItem('Loading'))
-                self.taskTable.setItem(i,4,QTableWidgetItem('Loading'))
-                self.taskTable.setItem(i,5,QTableWidgetItem('Loading'))
-                self.taskTable.setCellWidget(i, 6, QProgressBar(self.taskTable))
-                self.taskTable.setItem(i,7,QTableWidgetItem('Loading'))
-                self.taskTable.setItem(i,8,QTableWidgetItem('Loading'))
-                
+                self.taskTable.setItem(i, 4, QTableWidgetItem('Loading'))
+                self.taskTable.setItem(i, 5, QTableWidgetItem('Loading'))
+                self.taskTable.setCellWidget(i, 6, QProgressBar(
+                    self.taskTable))
+                self.taskTable.setItem(i, 7, QTableWidgetItem('Loading'))
+                self.taskTable.setItem(i, 8, QTableWidgetItem('Loading'))
 
     def showAddUridlg(self):
         if not self.AddUridlg:
@@ -260,21 +277,28 @@ class Main(QMainWindow):
         self.AddUridlg.show()
 
     def AddNewUri(self):
-        duplicatelink=[]
+        duplicatelink = []
         for uri in self.AddUridlg.UriLineEdit.text().split():
-            if uri in {self.taskTable.item(i,1).text() for i in range(self.taskTable.rowCount())}:
+            if uri in {
+                    self.taskTable.item(i, 1).text()
+                    for i in range(self.taskTable.rowCount())
+            }:
                 duplicatelink.append(uri)
         if len(duplicatelink):
-            QMessageBox.information(self,'Info','duplicated Uri detected:'+','.join(duplicatelink))
-        newLinks=set(self.AddUridlg.UriLineEdit.text().split())-set(duplicatelink)
+            QMessageBox.information(
+                self, 'Info',
+                'duplicated Uri detected:' + ','.join(duplicatelink))
+        newLinks = set(
+            self.AddUridlg.UriLineEdit.text().split()) - set(duplicatelink)
         if len(newLinks):
             for link in newLinks:
-                data=res.Sendcmd.SendCommand('addUri '+link,res.Sendcmd.server,res.Sendcmd.port)
-                if data!='error':
-                    j=json.loads(data)
-                    gid=j['result']
-                    j=json.loads(data)
-                    filesInfo.update({gid:None})
+                data = res.Sendcmd.SendCommand(
+                    'addUri ' + link, res.Sendcmd.server, res.Sendcmd.port)
+                if data != 'error':
+                    j = json.loads(data)
+                    gid = j['result']
+                    j = json.loads(data)
+                    filesInfo.update({gid: None})
             self.getFileList()
         self.AddUridlg.close()
         self.AddUridlg.UriLineEdit.clear()
@@ -290,73 +314,80 @@ class Main(QMainWindow):
 
     def showLocalDownloadDlg(self):
         if not self.retriveDlg:
-            self.retriveDlg=retriveDlg(self)
+            self.retriveDlg = retriveDlg(self)
             self.retriveDlg.setModal(True)
             self.retriveDlg.OkBtn.clicked.connect(self.getLocalPath)
         self.retriveDlg.show()
 
     def getLocalPath(self):
-        LocalPath=self.retriveDlg.PathLineEdit.text()
+        LocalPath = self.retriveDlg.PathLineEdit.text()
         if not LocalPath or not os.path.exists(LocalPath):
-            QMessageBox.critical(self,'Invalid Path','Invalid Path')
+            QMessageBox.critical(self, 'Invalid Path', 'Invalid Path')
         else:
             pass
 
     def Start_Server_Download_slot(self):
-        rows=[]
+        rows = []
         for itm in self.taskTable.selectionModel().selectedRows():
             rows.append(int(itm.row()))
         for r in rows:
-            gid=list(filesInfo.keys())[r]
-            res.Sendcmd.SendCommand('unpause '+gid,res.Sendcmd.server,res.Sendcmd.port)
+            gid = list(filesInfo.keys())[r]
+            res.Sendcmd.SendCommand('unpause ' + gid, res.Sendcmd.server,
+                                    res.Sendcmd.port)
         if self.updateThread.isFinished():
             self.updateThread.start()
 
     def Pause_Server_Download_slot(self):
-        rows=[]
+        rows = []
         for itm in self.taskTable.selectionModel().selectedRows():
             rows.append(int(itm.row()))
         for r in rows:
-            gid=list(filesInfo.keys())[r]
-            res.Sendcmd.SendCommand('pause '+gid,res.Sendcmd.server,res.Sendcmd.port)
+            gid = list(filesInfo.keys())[r]
+            res.Sendcmd.SendCommand('pause ' + gid, res.Sendcmd.server,
+                                    res.Sendcmd.port)
         if self.updateThread.isFinished():
             self.updateThread.start()
 
     def Delete_Server_Download_slot(self):
-        rows=[]
+        rows = []
         for itm in self.taskTable.selectionModel().selectedRows():
             rows.append(int(itm.row()))
-        for r in sorted(rows,reverse=True):
-            gid=list(filesInfo.keys())[r]
-            res.Sendcmd.SendCommand('remove '+gid,res.Sendcmd.server,res.Sendcmd.port)
-            res.Sendcmd.SendCommand('removeDownloadResult '+gid,res.Sendcmd.server,res.Sendcmd.port)
-            res.Sendcmd.SendCommand('_delLocalFile_ '+filesInfo[gid]['result']['files'][0]['path'],res.Sendcmd.server,res.Sendcmd.port)
+        for r in sorted(rows, reverse=True):
+            gid = list(filesInfo.keys())[r]
+            res.Sendcmd.SendCommand('remove ' + gid, res.Sendcmd.server,
+                                    res.Sendcmd.port)
+            res.Sendcmd.SendCommand('removeDownloadResult ' + gid,
+                                    res.Sendcmd.server, res.Sendcmd.port)
+            res.Sendcmd.SendCommand(
+                '_delLocalFile_ ' +
+                filesInfo[gid]['result']['files'][0]['path'],
+                res.Sendcmd.server, res.Sendcmd.port)
             del filesInfo[gid]
             self.taskTable.removeRow(r)
         if self.updateThread.isFinished():
             self.updateThread.start()
 
-
-    def closeEvent(self,event):
-        with open('./res/fileInfo.json','w') as file:
-            json.dump(filesInfo,file)
+    def closeEvent(self, event):
+        with open('./res/fileInfo.json', 'w') as file:
+            json.dump(filesInfo, file)
         event.accept()
 
 
-
 class UpdateFileStatus(QThread):
-    NewData=pyqtSignal(int,list,dict)
+    NewData = pyqtSignal(int, list, dict)
+
     def __init__(self):
         super().__init__()
 
     def run(self):
-        keys=list(filesInfo.keys())
-        for i,gid in enumerate(keys):
-            r=res.Sendcmd.SendCommand('tellStatus '+gid,res.Sendcmd.server,res.Sendcmd.port)
-            if r!='error':
-                self.NewData.emit(i,keys,json.loads(r))
+        keys = list(filesInfo.keys())
+        for i, gid in enumerate(keys):
+            r = res.Sendcmd.SendCommand('tellStatus ' + gid,
+                                        res.Sendcmd.server, res.Sendcmd.port)
+            if r != 'error':
+                self.NewData.emit(i, keys, json.loads(r))
             else:
-                self.NewData.emit(i,list(),dict())
+                self.NewData.emit(i, list(), dict())
 
 
 if __name__ == '__main__':

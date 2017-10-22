@@ -18,7 +18,7 @@ def runFTPServer():
     handler.passive_ports = range(2335, 2337)
     # abfs=AbstractedFS('/data/downloads',handler)
     # handler.abstracted_fs=abfs
-    #server = FTPServer(('', 2332), handler)
+    server = FTPServer(('', 21), handler)
     # try:
     #     server.serve_forever()
     # except KeyboardInterrupt:

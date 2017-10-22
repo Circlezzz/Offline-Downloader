@@ -9,7 +9,7 @@ import os
 import signal
 
 ip = '192.168.204.128'
-port = 2332
+port = 21
 username = 'PyOdUsEr'
 passwd = 'mG3Lfvl-!#'
 
