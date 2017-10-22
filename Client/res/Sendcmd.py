@@ -14,9 +14,8 @@ def SendCommand(cmds, server, port):
         sock.connect((server, port))
     except OSError:
         print('Failed to connect')
+        sock.close()
         return 'error'
-    finally:
-        sock.close() 
 
     sock.send(cmds.encode('utf8'))
     try:

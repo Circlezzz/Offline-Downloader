@@ -157,7 +157,7 @@ class Main(QMainWindow):
             self.updateThread=UpdateFileStatus()
             self.timer=QTimer(self)
             self.timer.timeout.connect(self.updateThread.start)
-            self.update.NewData.connect(self.updateFilelist)
+            self.updateThread.NewData.connect(self.updateFilelist)
             self.timer.start(3000)
             self.getFileList()
 
@@ -260,7 +260,7 @@ class Main(QMainWindow):
             #     json.dump(self.filesInfo,file)
         self.AddUridlg.close()
         self.AddUridlg.UriLineEdit.clear()
-        self.getFileList(repaint=True)
+        self.getFileList()
 
     def showAddTorrentdlg(self):
         pass
@@ -286,13 +286,13 @@ class Main(QMainWindow):
             pass
 
     def Start_Server_Download_slot(self):
-        gid=list(self.filesInfo.keys())[self.currentIndex]
+        gid=list(filesInfo.keys())[self.currentIndex]
         res.Sendcmd.SendCommand('unpause '+gid,res.Sendcmd.server,res.Sendcmd.port)
         if self.updateThread.isFinished():
             self.updateThread.start()
 
     def Pause_Server_Download_slot(self):
-        gid=list(self.filesInfo.keys())[self.currentIndex]
+        gid=list(filesInfo.keys())[self.currentIndex]
         res.Sendcmd.SendCommand('pause '+gid,res.Sendcmd.server,res.Sendcmd.port)
         if self.updateThread.isFinished():
             self.updateThread.start()
@@ -301,7 +301,7 @@ class Main(QMainWindow):
         gid=list(filesInfo.keys())[self.currentIndex]
         res.Sendcmd.SendCommand('remove '+gid,res.Sendcmd.server,res.Sendcmd.port)
         res.Sendcmd.SendCommand('removeDownloadResult '+gid,res.Sendcmd.server,res.Sendcmd.port)
-        res.Sendcmd.SendCommand('_delLocalFile_ '+self.taskTable.item(self.currentIndex,0).text(),res.Sendcmd.server,res.Sendcmd.port)
+        res.Sendcmd.SendCommand('_delLocalFile_ '+filesInfo[gid]['result']['files'][0]['path'],res.Sendcmd.server,res.Sendcmd.port)
         del filesInfo[gid]
         self.taskTable.removeRow(self.currentIndex)
         if self.updateThread.isFinished():
@@ -320,9 +320,9 @@ class Main(QMainWindow):
 
 
 class UpdateFileStatus(QThread):
+    NewData=pyqtSignal(int,list,dict)
     def __init__(self):
         super().__init__()
-        self.NewData=pyqtSignal(int,list,dict)
 
     def run(self):
         keys=list(filesInfo.keys())
