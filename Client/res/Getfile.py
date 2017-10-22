@@ -11,7 +11,7 @@ import signal
 ip = '192.168.204.128'
 port = 21
 username = 'PyOdUsEr'
-passwd = 'mG3Lfvl-!#'
+passwd = 'mG3Lfvl-!%'
 
 
 class Done(Exception):
