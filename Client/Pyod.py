@@ -14,8 +14,10 @@ import res.Sendcmd
 import json
 import os
 from collections import OrderedDict
+import subprocess
 
 filesInfo = OrderedDict()
+aria2Path='./res/aria2/'
 
 
 class Main(QMainWindow):
@@ -31,12 +33,12 @@ class Main(QMainWindow):
         layout = QVBoxLayout(mainwidget)
         self.taskTable = QTableWidget(mainwidget)
         layout.addWidget(self.taskTable)
-        self.taskTable.setColumnCount(9)
+        self.taskTable.setColumnCount(10)
         self.taskTable.horizontalHeader().setStretchLastSection(True)
         self.taskTable.setSelectionBehavior(QAbstractItemView.SelectRows)
         header = [
             'File Name', 'Link Address', 'Size', 'Offline Status',
-            'Offline Process', 'Offline Speed', 'Retrive Process',
+            'Offline Process', 'Offline Speed', 'Retrive Status','Retrive Process',
             'Retrive Speed', 'Save Path'
         ]
         self.taskTable.setHorizontalHeaderLabels(header)
@@ -181,6 +183,7 @@ class Main(QMainWindow):
             self.timer.timeout.connect(self.updateThread.start)
             self.updateThread.NewData.connect(self.updateFilelist)
             self.timer.start(3000)
+            self.aria2process=subprocess.Popen(aria2Path+'aria2c.exe')
             self.getFileList()
 
     def updateFilelist(self, i, l, data):
@@ -200,6 +203,7 @@ class Main(QMainWindow):
                         int(status['result']['completedLength']) / int(size),
                         '.2%'))
             offlinespeed = status['result']['downloadSpeed']
+            retrivestatus=''
             retrivespeed = ''
             savepath = ''
             self.taskTable.item(i, 0).setText(filename)
@@ -208,8 +212,9 @@ class Main(QMainWindow):
             self.taskTable.item(i, 3).setText(offlinestatus)
             self.taskTable.item(i, 4).setText(offlineprocess)
             self.taskTable.item(i, 5).setText(offlinespeed)
-            self.taskTable.item(i, 7).setText(retrivespeed)
-            self.taskTable.item(i, 8).setText(savepath)
+            self.taskTable.item(i,6).setText(retrivestatus)
+            self.taskTable.item(i, 8).setText(retrivespeed)
+            self.taskTable.item(i, 9).setText(savepath)
 
     def getFileList(self):
         self.taskTable.clearContents()
@@ -233,6 +238,7 @@ class Main(QMainWindow):
                             int(status['result']['completedLength']) /
                             int(size), '.2%'))
                 offlinespeed = status['result']['downloadSpeed']
+                retrivestatus=''
                 retrivespeed = ''
                 savepath = ''
                 filenameItem = QTableWidgetItem(filename)
@@ -242,6 +248,7 @@ class Main(QMainWindow):
                 offlinestatusItem = QTableWidgetItem(offlinestatus)
                 offlineprocessItem = QTableWidgetItem(offlineprocess)
                 offlinespeedItem = QTableWidgetItem(offlinespeed)
+                retrivestatusItem=QTableWidgetItem(retrivestatus)
                 retrivespeedItem = QTableWidgetItem(retrivespeed)
                 savepathItem = QTableWidgetItem(savepath)
 
@@ -252,10 +259,11 @@ class Main(QMainWindow):
                 self.taskTable.setItem(i, 3, offlinestatusItem)
                 self.taskTable.setItem(i, 4, offlineprocessItem)
                 self.taskTable.setItem(i, 5, offlinespeedItem)
-                self.taskTable.setCellWidget(i, 6, QProgressBar(
+                self.taskTable.setItem(i,6,retrivestatusItem)
+                self.taskTable.setCellWidget(i, 7, QProgressBar(
                     self.taskTable))
-                self.taskTable.setItem(i, 7, retrivespeedItem)
-                self.taskTable.setItem(i, 8, savepathItem)
+                self.taskTable.setItem(i, 8, retrivespeedItem)
+                self.taskTable.setItem(i, 9, savepathItem)
             else:
                 self.taskTable.insertRow(i)
                 self.taskTable.setItem(i, 0, QTableWidgetItem('Loading'))
@@ -264,10 +272,11 @@ class Main(QMainWindow):
                 self.taskTable.setItem(i, 3, QTableWidgetItem('Loading'))
                 self.taskTable.setItem(i, 4, QTableWidgetItem('Loading'))
                 self.taskTable.setItem(i, 5, QTableWidgetItem('Loading'))
-                self.taskTable.setCellWidget(i, 6, QProgressBar(
+                self.taskTable.setItem(i, 6, QTableWidgetItem('Loading'))
+                self.taskTable.setCellWidget(i, 7, QProgressBar(
                     self.taskTable))
-                self.taskTable.setItem(i, 7, QTableWidgetItem('Loading'))
                 self.taskTable.setItem(i, 8, QTableWidgetItem('Loading'))
+                self.taskTable.setItem(i, 9, QTableWidgetItem('Loading'))
 
     def showAddUridlg(self):
         if not self.AddUridlg:

@@ -9,7 +9,7 @@ from pyftpdlib.filesystems import AbstractedFS
 
 def runFTPServer():
     authorizer = DummyAuthorizer()
-    authorizer.add_user('PyOdUsEr', 'mG3Lfvl-!#', '/data/downloads',
+    authorizer.add_user('PyOdUsEr', 'mG3Lfvl-!%', '/data/downloads',
                         'elradfmwM')
     # handler=TLS_FTPHandler
     # handler.certfile='/res/server.pem'S
