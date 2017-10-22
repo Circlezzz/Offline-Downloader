@@ -8,28 +8,35 @@ port = 26879
 
 
 def SendCommand(cmds, server, port):
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.settimeout(2)
-    try:
-        sock.connect((server, port))
-    except OSError:
-        print('Failed to connect')
-        sock.close()
-        return 'error'
+    def send():
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(2)
+        try:
+            sock.connect((server, port))
+        except OSError:
+            print('Failed to connect')
+            sock.close()
+            return 'error'
 
-    sock.send(cmds.encode('utf8'))
-    try:
-        data = sock.recv(1024)
-    except socket.timeout:
-        return 'error'
-    else:
-        return data.decode('utf8')
-    finally:
-        sock.close()
+        sock.send(cmds.encode('utf8'))
+        try:
+            data = sock.recv(1024)
+        except socket.timeout:
+            return 'error'
+        else:
+            return data.decode('utf8')
+        finally:
+            sock.close()
+
+    result='error'
+    while result=='error':
+        result=send()
+    return result
+
 
 
 if __name__ == '__main__':
-    a = SendCommand('addUri https://github.com/JustArchi/ArchiSteamFarm/releases/download/3.0.3.6/ASF-linux-x64.zip',server,port)
+    a = SendCommand('addUri https://github.com/JustArchi/ArchiSteamFarm/releases/download/3.0.3.6/ASF-linux-x64.zip https://github.com/JustArchi/ArchiSteamFarm/releases/download/3.0.4.0/ASF-linux-arm.zip https://github.com/JustArchi/ArchiSteamFarm/releases/download/3.0.4.0/ASF-win-x64.zip',server,port)
     import json
     j=json.loads(a)
     b=j['result']

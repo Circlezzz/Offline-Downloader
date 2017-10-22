@@ -98,9 +98,12 @@ class Main(QMainWindow):
         self.ftp = None
         self.userinfo = None
         self.timer=None
-        # if os.path.exists('./res/fileInfo.json'):
-        #     with open('./res/fileInfo.json') as file:
-        #         self.filesInfo = json.load(file)            
+        if os.path.exists('./res/fileInfo.json'):
+            with open('./res/fileInfo.json') as file:
+                filesInfo.update(json.load(file))
+        else:
+            f=open('./res/fileInfo.json','w')
+            f.close()
         if os.path.exists('./res/serverInfo.json'):
             with open('./res/serverInfo.json') as file:
                 self.userinfo = json.load(file)
@@ -247,20 +250,29 @@ class Main(QMainWindow):
         self.AddUridlg.show()
 
     def AddNewUri(self):
-        data=res.Sendcmd.SendCommand('addUri '+self.AddUridlg.UriLineEdit.text(),res.Sendcmd.server,res.Sendcmd.port)
-        if data!='error':
-            j=json.loads(data)
-            gid=j['result']
-            #print(gid)
-            # data=res.Sendcmd.SendCommand('getStatus '+gid,res.Sendcmd.server,res.Sendcmd.port)
-            # print(data)
-            j=json.loads(data)
-            filesInfo.update({gid:None})
-            # with open('res/fileInfo.json','w+') as file:
-            #     json.dump(self.filesInfo,file)
+        duplicatelink=[]
+        for uri in self.AddUridlg.UriLineEdit.text().split():
+            if uri in {self.taskTable.item(i,1).text() for i in range(self.taskTable.rowCount())}:
+                duplicatelink.append(uri)
+        if len(duplicatelink):
+            QMessageBox.information(self,'Info','duplicated Uri detected:'+','.join(duplicatelink))
+        newLinks=set(self.AddUridlg.UriLineEdit.text().split())-set(duplicatelink)
+        if len(newLinks):
+            for link in newLinks:
+                data=res.Sendcmd.SendCommand('addUri '+link,res.Sendcmd.server,res.Sendcmd.port)
+                if data!='error':
+                    j=json.loads(data)
+                    gid=j['result']
+                    #print(gid)
+                    # data=res.Sendcmd.SendCommand('getStatus '+gid,res.Sendcmd.server,res.Sendcmd.port)
+                    # print(data)
+                    j=json.loads(data)
+                    filesInfo.update({gid:None})
+                    # with open('res/fileInfo.json','w+') as file:
+                    #     json.dump(self.filesInfo,file)
+            self.getFileList()
         self.AddUridlg.close()
         self.AddUridlg.UriLineEdit.clear()
-        self.getFileList()
 
     def showAddTorrentdlg(self):
         pass
@@ -286,36 +298,44 @@ class Main(QMainWindow):
             pass
 
     def Start_Server_Download_slot(self):
-        gid=list(filesInfo.keys())[self.currentIndex]
-        res.Sendcmd.SendCommand('unpause '+gid,res.Sendcmd.server,res.Sendcmd.port)
+        rows=[]
+        for itm in self.taskTable.selectionModel().selectedRows():
+            rows.append(int(itm.row()))
+        for r in rows:
+            gid=list(filesInfo.keys())[r]
+            res.Sendcmd.SendCommand('unpause '+gid,res.Sendcmd.server,res.Sendcmd.port)
         if self.updateThread.isFinished():
             self.updateThread.start()
 
     def Pause_Server_Download_slot(self):
-        gid=list(filesInfo.keys())[self.currentIndex]
-        res.Sendcmd.SendCommand('pause '+gid,res.Sendcmd.server,res.Sendcmd.port)
+        rows=[]
+        for itm in self.taskTable.selectionModel().selectedRows():
+            rows.append(int(itm.row()))
+        for r in rows:
+            gid=list(filesInfo.keys())[r]
+            res.Sendcmd.SendCommand('pause '+gid,res.Sendcmd.server,res.Sendcmd.port)
         if self.updateThread.isFinished():
             self.updateThread.start()
 
     def Delete_Server_Download_slot(self):
-        gid=list(filesInfo.keys())[self.currentIndex]
-        res.Sendcmd.SendCommand('remove '+gid,res.Sendcmd.server,res.Sendcmd.port)
-        res.Sendcmd.SendCommand('removeDownloadResult '+gid,res.Sendcmd.server,res.Sendcmd.port)
-        res.Sendcmd.SendCommand('_delLocalFile_ '+filesInfo[gid]['result']['files'][0]['path'],res.Sendcmd.server,res.Sendcmd.port)
-        del filesInfo[gid]
-        self.taskTable.removeRow(self.currentIndex)
+        rows=[]
+        for itm in self.taskTable.selectionModel().selectedRows():
+            rows.append(int(itm.row()))
+        for r in sorted(rows,reverse=True):
+            gid=list(filesInfo.keys())[r]
+            res.Sendcmd.SendCommand('remove '+gid,res.Sendcmd.server,res.Sendcmd.port)
+            res.Sendcmd.SendCommand('removeDownloadResult '+gid,res.Sendcmd.server,res.Sendcmd.port)
+            res.Sendcmd.SendCommand('_delLocalFile_ '+filesInfo[gid]['result']['files'][0]['path'],res.Sendcmd.server,res.Sendcmd.port)
+            del filesInfo[gid]
+            self.taskTable.removeRow(r)
         if self.updateThread.isFinished():
             self.updateThread.start()
 
 
-    # def closeEvent(self,event):
-    #     if os.path.exists('./res/fileInfo.json'):
-    #         if len(self.filesInfo):
-    #             with open('./res/fileInfo.json','w') as file:
-    #                 json.dump(self.filesInfo,file)
-    #         else:
-    #             os.remove('./res/fileInfo.json')
-    #     event.accept()
+    def closeEvent(self,event):
+        with open('./res/fileInfo.json','w') as file:
+            json.dump(filesInfo,file)
+        event.accept()
 
 
 
