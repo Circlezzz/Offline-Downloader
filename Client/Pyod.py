@@ -16,8 +16,10 @@ import json
 import os
 from collections import OrderedDict
 import subprocess
+import signal
 
 filesInfo = OrderedDict()
+localFileInfo = list()
 
 
 class Main(QMainWindow):
@@ -38,8 +40,8 @@ class Main(QMainWindow):
         self.taskTable.setSelectionBehavior(QAbstractItemView.SelectRows)
         header = [
             'File Name', 'Link Address', 'Size', 'Offline Status',
-            'Offline Process', 'Offline Speed', 'Retrive Status','Retrive Process',
-            'Retrive Speed', 'Save Path'
+            'Offline Process', 'Offline Speed', 'Retrive Status',
+            'Retrive Process', 'Retrive Speed', 'Save Path'
         ]
         self.taskTable.setHorizontalHeaderLabels(header)
         self.taskTable.setMinimumSize(1000, 600)
@@ -59,6 +61,7 @@ class Main(QMainWindow):
         self.Pause_Server_Download = QAction('Pause Offline Download',
                                              self.taskTable)
         self.Start_Local_Download = QAction('Start Retrieve', self.taskTable)
+        self.Resume_local_Download=QAction('Resume Retrieve',self.taskTable)
         self.Pause_Local_Download = QAction('Pause Retrieve', self.taskTable)
         self.Delete_Local_Download = QAction('Delete From List',
                                              self.taskTable)
@@ -68,6 +71,7 @@ class Main(QMainWindow):
         self.popMenu.addAction(self.Pause_Server_Download)
         self.popMenu.addAction(self.Delete_Server_Download)
         self.popMenu.addAction(self.Start_Local_Download)
+        self.popMenu.addAction(self.Resume_local_Download)
         self.popMenu.addAction(self.Pause_Local_Download)
         self.popMenu.addAction(self.Delete_Local_Download)
         self.Start_Server_Download.triggered.connect(
@@ -76,16 +80,19 @@ class Main(QMainWindow):
             self.Pause_Server_Download_slot)
         self.Delete_Server_Download.triggered.connect(
             self.Delete_Server_Download_slot)
+        self.Resume_local_Download.triggered.connect(self.Resume_Retrieve_slot)
+        self.Pause_Local_Download.triggered.connect(self.Pause_Retrieve_slot)
+        self.Delete_Local_Download.triggered.connect(self.Delete_Retrieve_slot)
         self.taskTable.customContextMenuRequested.connect(self.showMenu)
 
         self.retriveDlg = None
-        self.pathDlg=None
+        self.pathDlg = None
         self.Start_Local_Download.triggered.connect(self.showLocalDownloadDlg)
 
         menu = self.menuBar()
         SettingMenu = QMenu('&Setting', self)
         LoginAct = QAction('Login', self)
-        ariaPathAct=QAction('Path',self)
+        ariaPathAct = QAction('Path', self)
         SettingMenu.addAction(LoginAct)
         SettingMenu.addAction(ariaPathAct)
         menu.addMenu(SettingMenu)
@@ -113,9 +120,16 @@ class Main(QMainWindow):
         self.ftp = None
         self.userinfo = None
         self.timer = None
-        self.aria2exepath=None
-        self.aria2confpath=None
-        self.aria2process=None
+        self.aria2exepath = None
+        self.aria2confpath = None
+        self.aria2process = None
+        if os.path.exists('./res/localFileInfo.json'):
+            with open('./res/localFileInfo.json') as file:
+                global localFileInfo
+                localFileInfo = json.load(file)
+        else:
+            f = open('./res/localFileInfo.json', 'w')
+            f.close()
         if os.path.exists('./res/fileInfo.json'):
             with open('./res/fileInfo.json') as file:
                 filesInfo.update(json.load(file))
@@ -123,10 +137,10 @@ class Main(QMainWindow):
             f = open('./res/fileInfo.json', 'w')
             f.close()
         if os.path.exists('./res/aria2path.json'):
-            with open('./res/aria2path.json','r') as file:
-                d=json.load(file)
-                self.aria2exepath=d['exePath']
-                self.aria2confpath=d['confPath']           
+            with open('./res/aria2path.json', 'r') as file:
+                d = json.load(file)
+                self.aria2exepath = d['exePath']
+                self.aria2confpath = d['confPath']
         if os.path.exists('./res/serverInfo.json'):
             with open('./res/serverInfo.json') as file:
                 self.userinfo = json.load(file)
@@ -135,10 +149,10 @@ class Main(QMainWindow):
             self.username = self.userinfo['username']
             self.port = int(self.userinfo['port'])
             self.login()
-    
+
     def setaria2Path(self):
         if not self.pathDlg:
-            self.pathDlg=res.aria2pathDialog.ariapathDlg(self)
+            self.pathDlg = res.aria2pathDialog.ariapathDlg(self)
             self.pathDlg.okBtn.clicked.connect(self.getPath)
         if self.aria2exepath:
             self.pathDlg.exepathLineEdit.setText(self.aria2exepath)
@@ -147,11 +161,14 @@ class Main(QMainWindow):
         self.pathDlg.show()
 
     def getPath(self):
-        self.aria2exepath=self.pathDlg.exepathLineEdit.text()
-        self.aria2confpath=self.pathDlg.confpathLineEdit.text()
-        if self.aria2confpath!='' and self.aria2exepath!='':
-            with open('./res/aria2path.json','w') as file:
-                json.dump({'exePath':self.aria2exepath,'confPath':self.aria2confpath},file)
+        self.aria2exepath = self.pathDlg.exepathLineEdit.text()
+        self.aria2confpath = self.pathDlg.confpathLineEdit.text()
+        if self.aria2confpath != '' and self.aria2exepath != '':
+            with open('./res/aria2path.json', 'w') as file:
+                json.dump({
+                    'exePath': self.aria2exepath,
+                    'confPath': self.aria2confpath
+                }, file)
         self.pathDlg.close()
 
     def showMenu(self, pos):
@@ -165,12 +182,31 @@ class Main(QMainWindow):
         rows = []
         for itm in self.taskTable.selectionModel().selectedRows():
             rows.append(int(itm.row()))
-        for r in rows:
-            if self.taskTable.item(r, 3).text() != 'complete':
+        if len(rows)>1:
+            self.popMenu.actions()[3].setEnabled(False)
+            self.popMenu.actions()[4].setEnabled(False)
+            self.popMenu.actions()[5].setEnabled(False)
+            self.popMenu.actions()[6].setEnabled(False)
+        elif len(rows)==1:
+            if self.taskTable.item(int(rows[0]),3).text()!='complete':
                 self.popMenu.actions()[3].setEnabled(False)
                 self.popMenu.actions()[4].setEnabled(False)
                 self.popMenu.actions()[5].setEnabled(False)
-                break
+                self.popMenu.actions()[6].setEnabled(False)
+            if self.taskTable.item(int(rows[0]),6).text()=='':
+                self.popMenu.actions()[4].setEnabled(False)
+                self.popMenu.actions()[5].setEnabled(False)
+                self.popMenu.actions()[6].setEnabled(False)
+            elif self.taskTable.item(int(rows[0]),6).text()=='paused':
+                self.popMenu.actions()[3].setEnabled(False)
+                self.popMenu.actions()[5].setEnabled(False)
+            elif self.taskTable.item(int(rows[0]),6).text()=='complete':
+                self.popMenu.actions()[3].setEnabled(False)
+                self.popMenu.actions()[4].setEnabled(False)
+                self.popMenu.actions()[5].setEnabled(False)
+            else:
+                self.popMenu.actions()[3].setEnabled(False)
+                self.popMenu.actions()[4].setEnabled(False)               
 
         self.popMenu.exec_(QCursor.pos())
 
@@ -209,12 +245,26 @@ class Main(QMainWindow):
             with open('./res/serverInfo.json', 'w+') as file:
                 json.dump(self.userinfo, file)
             self.updateThread = UpdateFileStatus()
+            self.updateLocalThread=UpdatelocalFileStatus()
             self.timer = QTimer(self)
             self.timer.timeout.connect(self.updateThread.start)
+            self.timer.timeout.connect(self.updateLocalThread.start)
             self.updateThread.NewData.connect(self.updateFilelist)
+            self.updateLocalThread.NewData.connect(self.updateLocalFileList)
             self.timer.start(3000)
             if self.aria2exepath and self.aria2confpath:
-                self.aria2process=subprocess.Popen(self.aria2exepath+' --conf-path '+self.aria2confpath)
+                if not os.path.exists(
+                        self.aria2confpath.replace('aria2.conf',
+                                                   'session.dat')):
+                    f = open(
+                        self.aria2confpath.replace('aria2.conf',
+                                                   'session.dat'), 'w')
+                    f.close()
+                self.aria2process = subprocess.Popen(
+                    self.aria2exepath + ' --conf-path ' + self.aria2confpath +
+                    ' --save-session ' + self.aria2confpath.replace(
+                        'aria2.conf', 'session.dat') + ' --input-file ' +
+                    self.aria2confpath.replace('aria2.conf', 'session.dat'))
             self.getFileList()
 
     def updateFilelist(self, i, l, data):
@@ -234,18 +284,12 @@ class Main(QMainWindow):
                         int(status['result']['completedLength']) / int(size),
                         '.2%'))
             offlinespeed = status['result']['downloadSpeed']
-            retrivestatus=''
-            retrivespeed = ''
-            savepath = ''
             self.taskTable.item(i, 0).setText(filename)
             self.taskTable.item(i, 1).setText(linkaddress)
             self.taskTable.item(i, 2).setText(size)
             self.taskTable.item(i, 3).setText(offlinestatus)
             self.taskTable.item(i, 4).setText(offlineprocess)
             self.taskTable.item(i, 5).setText(offlinespeed)
-            self.taskTable.item(i,6).setText(retrivestatus)
-            self.taskTable.item(i, 8).setText(retrivespeed)
-            self.taskTable.item(i, 9).setText(savepath)
 
     def getFileList(self):
         self.taskTable.clearContents()
@@ -269,7 +313,7 @@ class Main(QMainWindow):
                             int(status['result']['completedLength']) /
                             int(size), '.2%'))
                 offlinespeed = status['result']['downloadSpeed']
-                retrivestatus=''
+                retrivestatus = ''
                 retrivespeed = ''
                 savepath = ''
                 filenameItem = QTableWidgetItem(filename)
@@ -279,7 +323,7 @@ class Main(QMainWindow):
                 offlinestatusItem = QTableWidgetItem(offlinestatus)
                 offlineprocessItem = QTableWidgetItem(offlineprocess)
                 offlinespeedItem = QTableWidgetItem(offlinespeed)
-                retrivestatusItem=QTableWidgetItem(retrivestatus)
+                retrivestatusItem = QTableWidgetItem(retrivestatus)
                 retrivespeedItem = QTableWidgetItem(retrivespeed)
                 savepathItem = QTableWidgetItem(savepath)
 
@@ -290,9 +334,11 @@ class Main(QMainWindow):
                 self.taskTable.setItem(i, 3, offlinestatusItem)
                 self.taskTable.setItem(i, 4, offlineprocessItem)
                 self.taskTable.setItem(i, 5, offlinespeedItem)
-                self.taskTable.setItem(i,6,retrivestatusItem)
+                self.taskTable.setItem(i, 6, retrivestatusItem)
                 self.taskTable.setCellWidget(i, 7, QProgressBar(
                     self.taskTable))
+                self.taskTable.cellWidget(i, 7).setMinimum(0)
+                self.taskTable.cellWidget(i, 7).setMaximum(100)
                 self.taskTable.setItem(i, 8, retrivespeedItem)
                 self.taskTable.setItem(i, 9, savepathItem)
             else:
@@ -303,11 +349,6 @@ class Main(QMainWindow):
                 self.taskTable.setItem(i, 3, QTableWidgetItem('Loading'))
                 self.taskTable.setItem(i, 4, QTableWidgetItem('Loading'))
                 self.taskTable.setItem(i, 5, QTableWidgetItem('Loading'))
-                self.taskTable.setItem(i, 6, QTableWidgetItem('Loading'))
-                self.taskTable.setCellWidget(i, 7, QProgressBar(
-                    self.taskTable))
-                self.taskTable.setItem(i, 8, QTableWidgetItem('Loading'))
-                self.taskTable.setItem(i, 9, QTableWidgetItem('Loading'))
 
     def showAddUridlg(self):
         if not self.AddUridlg:
@@ -337,8 +378,8 @@ class Main(QMainWindow):
                 if data != 'error':
                     j = json.loads(data)
                     gid = j['result']
-                    j = json.loads(data)
                     filesInfo.update({gid: None})
+                    localFileInfo.append(None)
             self.getFileList()
         self.AddUridlg.close()
         self.AddUridlg.UriLineEdit.clear()
@@ -364,7 +405,24 @@ class Main(QMainWindow):
         if not LocalPath or not os.path.exists(LocalPath):
             QMessageBox.critical(self, 'Invalid Path', 'Invalid Path')
         else:
-            pass
+            gid = res.Sendcmd.StartLocalDownload(
+                self.taskTable.item(self.currentIndex, 0).text(),
+                self.retriveDlg.ThreadSpinbox.value(), LocalPath)
+            localFileInfo[self.currentIndex] = gid
+            if self.updateLocalThread.isFinished():
+                self.updateLocalThread.start()
+            self.retriveDlg.close()
+
+    def updateLocalFileList(self,i,status):
+        self.taskTable.item(i, 6).setText(status['status'])
+        self.taskTable.item(i, 8).setText(status['downloadSpeed'])
+        self.taskTable.item(i, 9).setText(status['dir'])
+        if int(status['totalLength']) != 0:
+            self.taskTable.cellWidget(i, 7).setValue(
+                (int(status['completedLength']
+                        ) / int(status['totalLength'])) * 100)
+        else:
+            self.taskTable.cellWidget(i, 7).setValue(0)
 
     def Start_Server_Download_slot(self):
         rows = []
@@ -403,16 +461,33 @@ class Main(QMainWindow):
                 filesInfo[gid]['result']['files'][0]['path'],
                 res.Sendcmd.server, res.Sendcmd.port)
             del filesInfo[gid]
+            if localFileInfo[r]:
+                res.Sendcmd.DelLocalDownload(gid)
+            localFileInfo.pop(r)
             self.taskTable.removeRow(r)
         if self.updateThread.isFinished():
             self.updateThread.start()
 
+    def Pause_Retrieve_slot(self):
+        res.Sendcmd.PauseLocalDownload(localFileInfo[self.currentIndex])
+
+    def Delete_Retrieve_slot(self):
+        res.Sendcmd.DelLocalDownload(localFileInfo[self.currentIndex])
+        if os.path.exists(self.taskTable.item(self.currentIndex,9).text()):
+            os.remove(self.taskTable.item(self.currentIndex,9).text())
+        if os.path.exists(self.taskTable.item(self.currentIndex,9).text()+'.aria2'):
+            os.remove(self.taskTable.item(self.currentIndex,9).text()+'.aria2')
+    def Resume_Retrieve_slot(self):
+        res.Sendcmd.ResumeLocalDownload(localFileInfo[self.currentIndex])
+
     def closeEvent(self, event):
-        if self.aria2process:
-            self.aria2process.kill()
         with open('./res/fileInfo.json', 'w') as file:
             json.dump(filesInfo, file)
+        with open('./res/localFileInfo.json', 'w') as file:
+            json.dump(localFileInfo, file)
         event.accept()
+        if self.aria2process:
+            self.aria2process.send_signal(signal.CTRL_C_EVENT)
 
 
 class UpdateFileStatus(QThread):
@@ -431,6 +506,17 @@ class UpdateFileStatus(QThread):
             else:
                 self.NewData.emit(i, list(), dict())
 
+class UpdatelocalFileStatus(QThread):
+    NewData = pyqtSignal(int, dict)
+
+    def __init__(self):
+        super().__init__()
+
+    def run(self):
+        for i, gid in enumerate(localFileInfo):
+            if gid:
+                status = res.Sendcmd.CheckLocalDownloadStatus(gid)
+                self.NewData.emit(i,status)
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

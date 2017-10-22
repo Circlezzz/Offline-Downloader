@@ -2,6 +2,7 @@
 #-*- coding:utf-8 -*-
 
 import requests, json, socket
+import xmlrpc.client
 
 server = '192.168.204.128'
 port = 26879
@@ -33,6 +34,33 @@ def SendCommand(cmds, server, port):
         result=send()
     return result
 
+def StartLocalDownload(filename,thread,path):
+    s=xmlrpc.client.ServerProxy('http://localhost:6800/rpc')
+    r=s.aria2.addUri(['ftp://192.168.204.128/'+filename],{'dir':path,'max-connection-per-server':thread,'split':thread})
+    return r
+
+
+def CheckLocalDownloadStatus(gid):
+    s=xmlrpc.client.ServerProxy('http://localhost:6800/rpc')
+    try:
+        r=s.aria2.tellStatus(gid)
+    except xmlrpc.client.Fault:
+        return {'status':'complete','downloadSpeed':'0','dir':'err','totalLength':'1','completedLength':'1'}
+    else:
+        return r
+
+def DelLocalDownload(gid):
+    s=xmlrpc.client.ServerProxy('http://localhost:6800/rpc')
+    r=s.aria2.remove(gid)
+    r=s.aria2.removeDownloadResult(gid)
+
+def PauseLocalDownload(gid):
+    s=xmlrpc.client.ServerProxy('http://localhost:6800/rpc')
+    r=s.aria2.pause(gid)
+
+def ResumeLocalDownload(gid):
+    s=xmlrpc.client.ServerProxy('http://localhost:6800/rpc')
+    r=s.aria2.unpause(gid)
 
 
 if __name__ == '__main__':
