@@ -58,9 +58,9 @@ class Main(QMainWindow):
         self.Delete_Server_Download = QAction('Delete From Server', self.taskTable)
         self.popMenu.addAction(self.Start_Server_Download)
         self.popMenu.addAction(self.Pause_Server_Download)
+        self.popMenu.addAction(self.Delete_Server_Download)
         self.popMenu.addAction(self.Start_Local_Download)
         self.popMenu.addAction(self.Pause_Local_Download)
-        self.popMenu.addAction(self.Delete_Server_Download)
         self.popMenu.addAction(self.Delete_Local_Download)
         self.Start_Server_Download.triggered.connect(self.Start_Server_Download_slot)
         self.Pause_Server_Download.triggered.connect(self.Pause_Server_Download_slot)
@@ -120,7 +120,17 @@ class Main(QMainWindow):
         if self.currentIndex <0:
             for action in self.popMenu.actions():
                 action.setEnabled(False)
-            
+
+        rows=[]
+        for itm in self.taskTable.selectionModel().selectedRows():
+            rows.append(int(itm.row()))
+        for r in rows:
+            if self.taskTable.item(r,3).text()!='complete':
+                self.popMenu.actions()[3].setEnabled(False)
+                self.popMenu.actions()[4].setEnabled(False)
+                self.popMenu.actions()[5].setEnabled(False)
+                break
+
         self.popMenu.exec_(QCursor.pos())
 
     def showLogindlg(self):
@@ -263,13 +273,8 @@ class Main(QMainWindow):
                 if data!='error':
                     j=json.loads(data)
                     gid=j['result']
-                    #print(gid)
-                    # data=res.Sendcmd.SendCommand('getStatus '+gid,res.Sendcmd.server,res.Sendcmd.port)
-                    # print(data)
                     j=json.loads(data)
                     filesInfo.update({gid:None})
-                    # with open('res/fileInfo.json','w+') as file:
-                    #     json.dump(self.filesInfo,file)
             self.getFileList()
         self.AddUridlg.close()
         self.AddUridlg.UriLineEdit.clear()
