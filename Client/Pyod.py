@@ -11,13 +11,13 @@ from res.connectionSetup import loginWidget
 from res.Getfile import openFtp
 from res.retriveDialog import retriveDlg
 import res.Sendcmd
+import res.aria2pathDialog
 import json
 import os
 from collections import OrderedDict
 import subprocess
 
 filesInfo = OrderedDict()
-aria2Path='./res/aria2/'
 
 
 class Main(QMainWindow):
@@ -79,12 +79,15 @@ class Main(QMainWindow):
         self.taskTable.customContextMenuRequested.connect(self.showMenu)
 
         self.retriveDlg = None
+        self.pathDlg=None
         self.Start_Local_Download.triggered.connect(self.showLocalDownloadDlg)
 
         menu = self.menuBar()
         SettingMenu = QMenu('&Setting', self)
         LoginAct = QAction('Login', self)
+        ariaPathAct=QAction('Path',self)
         SettingMenu.addAction(LoginAct)
+        SettingMenu.addAction(ariaPathAct)
         menu.addMenu(SettingMenu)
         TaskMenu = QMenu('&New Task', self)
         AddUriAct = QAction('Add Uri', self)
@@ -105,16 +108,25 @@ class Main(QMainWindow):
         AddtorrentAct.triggered.connect(self.showAddTorrentdlg)
         AboutAct.triggered.connect(self.showAboutmedlg)
         AboutQtAct.triggered.connect(self.showAboutQtdlg)
+        ariaPathAct.triggered.connect(self.setaria2Path)
 
         self.ftp = None
         self.userinfo = None
         self.timer = None
+        self.aria2exepath=None
+        self.aria2confpath=None
+        self.aria2process=None
         if os.path.exists('./res/fileInfo.json'):
             with open('./res/fileInfo.json') as file:
                 filesInfo.update(json.load(file))
         else:
             f = open('./res/fileInfo.json', 'w')
             f.close()
+        if os.path.exists('./res/aria2path.json'):
+            with open('./res/aria2path.json','r') as file:
+                d=json.load(file)
+                self.aria2exepath=d['exePath']
+                self.aria2confpath=d['confPath']           
         if os.path.exists('./res/serverInfo.json'):
             with open('./res/serverInfo.json') as file:
                 self.userinfo = json.load(file)
@@ -123,6 +135,24 @@ class Main(QMainWindow):
             self.username = self.userinfo['username']
             self.port = int(self.userinfo['port'])
             self.login()
+    
+    def setaria2Path(self):
+        if not self.pathDlg:
+            self.pathDlg=res.aria2pathDialog.ariapathDlg(self)
+            self.pathDlg.okBtn.clicked.connect(self.getPath)
+        if self.aria2exepath:
+            self.pathDlg.exepathLineEdit.setText(self.aria2exepath)
+        if self.aria2confpath:
+            self.pathDlg.confpathLineEdit.setText(self.aria2confpath)
+        self.pathDlg.show()
+
+    def getPath(self):
+        self.aria2exepath=self.pathDlg.exepathLineEdit.text()
+        self.aria2confpath=self.pathDlg.confpathLineEdit.text()
+        if self.aria2confpath!='' and self.aria2exepath!='':
+            with open('./res/aria2path.json','w') as file:
+                json.dump({'exePath':self.aria2exepath,'confPath':self.aria2confpath},file)
+        self.pathDlg.close()
 
     def showMenu(self, pos):
         for action in self.popMenu.actions():
@@ -183,7 +213,8 @@ class Main(QMainWindow):
             self.timer.timeout.connect(self.updateThread.start)
             self.updateThread.NewData.connect(self.updateFilelist)
             self.timer.start(3000)
-            self.aria2process=subprocess.Popen(aria2Path+'aria2c.exe')
+            if self.aria2exepath and self.aria2confpath:
+                self.aria2process=subprocess.Popen(self.aria2exepath+' --conf-path '+self.aria2confpath)
             self.getFileList()
 
     def updateFilelist(self, i, l, data):
@@ -377,6 +408,8 @@ class Main(QMainWindow):
             self.updateThread.start()
 
     def closeEvent(self, event):
+        if self.aria2process:
+            self.aria2process.kill()
         with open('./res/fileInfo.json', 'w') as file:
             json.dump(filesInfo, file)
         event.accept()
