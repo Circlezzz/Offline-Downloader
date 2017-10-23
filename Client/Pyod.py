@@ -271,6 +271,8 @@ class Main(QMainWindow):
         if len(data):
             status = data
             gid = l[i]
+            if 'error' in status.keys():
+                status=filesInfo[gid]
             filesInfo[gid] = status
             filename = status['result']['files'][0]['path'].split('/')[-1]
             linkaddress = status['result']['files'][0]['uris'][0]['uri']
@@ -300,6 +302,8 @@ class Main(QMainWindow):
                                         res.Sendcmd.server, res.Sendcmd.port)
             if r != 'error':
                 status = json.loads(r)
+                if 'error' in status.keys():
+                    status=filesInfo[gid]
                 filesInfo[gid] = status
                 filename = status['result']['files'][0]['path'].split('/')[-1]
                 linkaddress = status['result']['files'][0]['uris'][0]['uri']
@@ -379,7 +383,7 @@ class Main(QMainWindow):
                     j = json.loads(data)
                     gid = j['result']
                     filesInfo.update({gid: None})
-                    localFileInfo.append(None)
+                    localFileInfo.append([])
             self.getFileList()
         self.AddUridlg.close()
         self.AddUridlg.UriLineEdit.clear()
@@ -408,7 +412,8 @@ class Main(QMainWindow):
             gid = res.Sendcmd.StartLocalDownload(
                 self.taskTable.item(self.currentIndex, 0).text(),
                 self.retriveDlg.ThreadSpinbox.value(), LocalPath)
-            localFileInfo[self.currentIndex] = gid
+            localFileInfo[self.currentIndex].append(gid)
+            localFileInfo[self.currentIndex].append(LocalPath)
             if self.updateLocalThread.isFinished():
                 self.updateLocalThread.start()
             self.retriveDlg.close()
@@ -416,7 +421,10 @@ class Main(QMainWindow):
     def updateLocalFileList(self,i,status):
         self.taskTable.item(i, 6).setText(status['status'])
         self.taskTable.item(i, 8).setText(status['downloadSpeed'])
-        self.taskTable.item(i, 9).setText(status['dir'])
+        if status['dir']!='err':
+            self.taskTable.item(i, 9).setText(status['dir'])
+        else:
+            self.taskTable.item(i,9).setText(localFileInfo[i][1])
         if int(status['totalLength']) != 0:
             self.taskTable.cellWidget(i, 7).setValue(
                 (int(status['completedLength']
@@ -461,7 +469,7 @@ class Main(QMainWindow):
                 filesInfo[gid]['result']['files'][0]['path'],
                 res.Sendcmd.server, res.Sendcmd.port)
             del filesInfo[gid]
-            if localFileInfo[r]:
+            if len(localFileInfo[r]):
                 res.Sendcmd.DelLocalDownload(gid)
             localFileInfo.pop(r)
             self.taskTable.removeRow(r)
@@ -469,16 +477,16 @@ class Main(QMainWindow):
             self.updateThread.start()
 
     def Pause_Retrieve_slot(self):
-        res.Sendcmd.PauseLocalDownload(localFileInfo[self.currentIndex])
+        res.Sendcmd.PauseLocalDownload(localFileInfo[self.currentIndex][0])
 
     def Delete_Retrieve_slot(self):
-        res.Sendcmd.DelLocalDownload(localFileInfo[self.currentIndex])
+        res.Sendcmd.DelLocalDownload(localFileInfo[self.currentIndex][0])
         if os.path.exists(self.taskTable.item(self.currentIndex,9).text()):
             os.remove(self.taskTable.item(self.currentIndex,9).text())
         if os.path.exists(self.taskTable.item(self.currentIndex,9).text()+'.aria2'):
             os.remove(self.taskTable.item(self.currentIndex,9).text()+'.aria2')
     def Resume_Retrieve_slot(self):
-        res.Sendcmd.ResumeLocalDownload(localFileInfo[self.currentIndex])
+        res.Sendcmd.ResumeLocalDownload(localFileInfo[self.currentIndex][0])
 
     def closeEvent(self, event):
         with open('./res/fileInfo.json', 'w') as file:
@@ -514,8 +522,8 @@ class UpdatelocalFileStatus(QThread):
 
     def run(self):
         for i, gid in enumerate(localFileInfo):
-            if gid:
-                status = res.Sendcmd.CheckLocalDownloadStatus(gid)
+            if len(gid):
+                status = res.Sendcmd.CheckLocalDownloadStatus(gid[0])
                 self.NewData.emit(i,status)
 
 if __name__ == '__main__':
