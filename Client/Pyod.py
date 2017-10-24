@@ -275,8 +275,8 @@ class Main(QMainWindow):
                 status=filesInfo[gid]
             filesInfo[gid] = status
             filename = status['result']['files'][0]['path'].split('/')[-1]
-            if 'hashInfo' in status['result'].keys():
-                linkaddress=status['result']['hashInfo']
+            if 'infoHash' in status['result'].keys():
+                linkaddress=status['result']['infoHash']
             else:
                 linkaddress = status['result']['files'][0]['uris'][0]['uri']
             size = status['result']['files'][0]['length']
@@ -501,14 +501,17 @@ class Main(QMainWindow):
             rows.append(int(itm.row()))
         for r in sorted(rows, reverse=True):
             gid = list(filesInfo.keys())[r]
-            res.Sendcmd.SendCommand('remove ' + gid, res.Sendcmd.server,
+            a=res.Sendcmd.SendCommand('remove ' + gid, res.Sendcmd.server,
                                     res.Sendcmd.port)
-            res.Sendcmd.SendCommand('removeDownloadResult ' + gid,
+            print(a)
+            a=res.Sendcmd.SendCommand('removeDownloadResult ' + gid,
                                     res.Sendcmd.server, res.Sendcmd.port)
-            res.Sendcmd.SendCommand(
+            print(a)
+            a=res.Sendcmd.SendCommand(
                 '_delLocalFile_ ' +
                 filesInfo[gid]['result']['files'][0]['path'],
                 res.Sendcmd.server, res.Sendcmd.port)
+            print(a)
             del filesInfo[gid]
             if len(localFileInfo[r]):
                 res.Sendcmd.DelLocalDownload(gid)
