@@ -15,13 +15,13 @@ class addUridlg(QDialog):
     def InitUI(self):
         mainlayout = QGridLayout(self)
         self.setLayout = mainlayout
-        UriLabel = QLabel('Uri', self)
+        self.UriLabel = QLabel('Uri', self)
         self.UriLineEdit = QLineEdit(self)
         self.UriLineEdit.setPlaceholderText(
-            'Uri or Magnet link, splite with a space')
+            'Uris split with a space')
         self.OkBtn = QPushButton('Ok', self)
         CancelBtn = QPushButton('Cancel', self)
-        mainlayout.addWidget(UriLabel, 0, 0)
+        mainlayout.addWidget(self.UriLabel, 0, 0)
         mainlayout.addWidget(self.UriLineEdit, 0, 1)
 
         downlayout = QHBoxLayout()

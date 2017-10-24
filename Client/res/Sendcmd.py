@@ -21,7 +21,7 @@ def SendCommand(cmds, server, port):
 
         sock.send(cmds.encode('utf8'))
         try:
-            data = sock.recv(1024)
+            data = sock.recv(2048)
         except socket.timeout:
             return 'error'
         else:
@@ -51,8 +51,14 @@ def CheckLocalDownloadStatus(gid):
 
 def DelLocalDownload(gid):
     s=xmlrpc.client.ServerProxy('http://localhost:6800/rpc')
-    r=s.aria2.remove(gid)
-    r=s.aria2.removeDownloadResult(gid)
+    try:
+        r=s.aria2.remove(gid)
+    except xmlrpc.client.Fault:
+        return {}
+    try:
+        r=s.aria2.removeDownloadResult(gid)
+    except xmlrpc.client.Fault:
+        return {}
 
 def PauseLocalDownload(gid):
     s=xmlrpc.client.ServerProxy('http://localhost:6800/rpc')

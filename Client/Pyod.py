@@ -295,11 +295,12 @@ class Main(QMainWindow):
 
     def getFileList(self):
         self.taskTable.clearContents()
-        for i in range(self.taskTable.rowCount()):
+        for i in reversed(range(self.taskTable.rowCount())):
             self.taskTable.removeRow(i)
         for i, gid in enumerate(filesInfo.keys()):
             r = res.Sendcmd.SendCommand('tellStatus ' + gid,
                                         res.Sendcmd.server, res.Sendcmd.port)
+            print(r)
             if r != 'error':
                 status = json.loads(r)
                 if 'error' in status.keys():
@@ -381,6 +382,7 @@ class Main(QMainWindow):
                     'addUri ' + link, res.Sendcmd.server, res.Sendcmd.port)
                 if data != 'error':
                     j = json.loads(data)
+                    print(j)
                     gid = j['result']
                     filesInfo.update({gid: None})
                     localFileInfo.append([])
@@ -389,7 +391,40 @@ class Main(QMainWindow):
         self.AddUridlg.UriLineEdit.clear()
 
     def showAddTorrentdlg(self):
-        pass
+        if not self.AddTorrentdlg:
+            self.AddTorrentdlg = addUridlg(self)
+            self.AddTorrentdlg.OkBtn.clicked.connect(self.AddNewTorrent)
+            self.AddTorrentdlg.UriLineEdit.setPlaceholderText('Magnet Links split with a space.')
+            self.AddTorrentdlg.UriLabel.setText('Magnet Links')
+            self.AddTorrentdlg.setModal(True)
+        self.AddTorrentdlg.show()
+
+    def AddNewTorrent(self):
+        duplicatelink = []
+        for uri in self.AddTorrentdlg.UriLineEdit.text().split():
+            if uri in {
+                    self.taskTable.item(i, 1).text()
+                    for i in range(self.taskTable.rowCount())
+            }:
+                duplicatelink.append(uri)
+        if len(duplicatelink):
+            QMessageBox.information(
+                self, 'Info',
+                'duplicated Uri detected:' + ','.join(duplicatelink))
+        newLinks = set(
+            self.AddTorrentdlg.UriLineEdit.text().split()) - set(duplicatelink)
+        if len(newLinks):
+            for link in newLinks:
+                data = res.Sendcmd.SendCommand(
+                    'addUri ' + link, res.Sendcmd.server, res.Sendcmd.port)
+                if data != 'error':
+                    j = json.loads(data)
+                    gid = j['result']
+                    filesInfo.update({gid: None})
+                    localFileInfo.append([])
+            self.getFileList()
+        self.AddTorrentdlg.close()
+        self.AddTorrentdlg.UriLineEdit.clear()
 
     def showAboutmedlg(self):
         pass
@@ -489,13 +524,21 @@ class Main(QMainWindow):
         res.Sendcmd.ResumeLocalDownload(localFileInfo[self.currentIndex][0])
 
     def closeEvent(self, event):
-        with open('./res/fileInfo.json', 'w') as file:
-            json.dump(filesInfo, file)
-        with open('./res/localFileInfo.json', 'w') as file:
-            json.dump(localFileInfo, file)
-        event.accept()
-        if self.aria2process:
-            self.aria2process.send_signal(signal.CTRL_C_EVENT)
+        flag=True
+        for i in range(self.taskTable.rowCount()):
+            if self.taskTable.item(i,6).text()!='' and self.taskTable.item(i,6).text()!='complete':
+                QMessageBox.warning(self,'Warning','Please pause retrieve before exit.')
+                event.ignore()
+                flag=False
+                break
+        if flag:
+            with open('./res/fileInfo.json', 'w') as file:
+                json.dump(filesInfo, file)
+            with open('./res/localFileInfo.json', 'w') as file:
+                json.dump(localFileInfo, file)
+            event.accept()
+            if self.aria2process:
+                self.aria2process.send_signal(signal.CTRL_C_EVENT)
 
 
 class UpdateFileStatus(QThread):
