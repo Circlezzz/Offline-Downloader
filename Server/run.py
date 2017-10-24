@@ -165,6 +165,14 @@ def cmd_argv2(token,pid,cmd):
         'params': ['token:' + token,pid]
     })
     r=requests.post('http://localhost:6800/jsonrpc',jsonreq)
+    t=r.text()
+    t=json.loads(t)
+    print(t)
+    if 'result' in t.keys():
+        if 'bittorrent' in t['result'].keys:
+            t['result']['bittorrent']={}
+            print(t)
+            return json.dumps(t).encode('utf8')
     return r.content
 
 #command with 2 argv(list)
@@ -176,14 +184,6 @@ def cmd_argv2_list(token,Uris,cmd):
         'params': ['token:' + token,Uris]
     })
     r=requests.post('http://localhost:6800/jsonrpc',jsonreq)
-    t=r.text()
-    t=json.loads(t)
-    print(t)
-    if 'result' in t.keys():
-        if 'bittorrent' in t['result'].keys:
-            t['result']['bittorrent']={}
-            print(t)
-            return json.dumps(t).encode('utf8')
     return r.content
 
 #command with 4 argv
