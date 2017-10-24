@@ -165,6 +165,7 @@ def cmd_argv2(token,pid,cmd):
         'params': ['token:' + token,pid]
     })
     r=requests.post('http://localhost:6800/jsonrpc',jsonreq)
+    print(r)
     return r.content
 
 #command with 2 argv(list)
