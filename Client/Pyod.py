@@ -533,6 +533,8 @@ class Main(QMainWindow):
         res.Sendcmd.ResumeLocalDownload(localFileInfo[self.currentIndex][0])
 
     def closeEvent(self, event):
+        if self.timer:
+            self.timer.stop()
         flag=True
         for i in range(self.taskTable.rowCount()):
             if self.taskTable.item(i,6).text()!='' and self.taskTable.item(i,6).text()!='complete':
@@ -582,4 +584,7 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
     mainwindow = Main()
     mainwindow.show()
-    sys.exit(app.exec_())
+    try:
+        sys.exit(app.exec_())
+    except KeyboardInterrupt:
+        pass
