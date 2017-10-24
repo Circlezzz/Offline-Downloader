@@ -12,6 +12,7 @@ from res.Getfile import openFtp
 from res.retriveDialog import retriveDlg
 import res.Sendcmd
 import res.aria2pathDialog
+import res.aboutmeDlg
 import json
 import os
 from collections import OrderedDict
@@ -20,6 +21,8 @@ import signal
 
 filesInfo = OrderedDict()
 localFileInfo = list()
+
+aria2process = None
 
 
 class Main(QMainWindow):
@@ -61,7 +64,7 @@ class Main(QMainWindow):
         self.Pause_Server_Download = QAction('Pause Offline Download',
                                              self.taskTable)
         self.Start_Local_Download = QAction('Start Retrieve', self.taskTable)
-        self.Resume_local_Download=QAction('Resume Retrieve',self.taskTable)
+        self.Resume_local_Download = QAction('Resume Retrieve', self.taskTable)
         self.Pause_Local_Download = QAction('Pause Retrieve', self.taskTable)
         self.Delete_Local_Download = QAction('Delete From List',
                                              self.taskTable)
@@ -110,6 +113,7 @@ class Main(QMainWindow):
         self.LoginWidget = None
         self.AddUridlg = None
         self.AddTorrentdlg = None
+        self.aboutmedlg = None
         LoginAct.triggered.connect(self.showLogindlg)
         AddUriAct.triggered.connect(self.showAddUridlg)
         AddtorrentAct.triggered.connect(self.showAddTorrentdlg)
@@ -117,12 +121,14 @@ class Main(QMainWindow):
         AboutQtAct.triggered.connect(self.showAboutQtdlg)
         ariaPathAct.triggered.connect(self.setaria2Path)
 
+        self.setWindowTitle('Python Offline Downloader')
+        self.setWindowIcon(QIcon('./res/icon.png'))
+
         self.ftp = None
         self.userinfo = None
         self.timer = None
         self.aria2exepath = None
         self.aria2confpath = None
-        self.aria2process = None
         if os.path.exists('./res/localFileInfo.json'):
             with open('./res/localFileInfo.json') as file:
                 global localFileInfo
@@ -182,31 +188,31 @@ class Main(QMainWindow):
         rows = []
         for itm in self.taskTable.selectionModel().selectedRows():
             rows.append(int(itm.row()))
-        if len(rows)>1:
+        if len(rows) > 1:
             self.popMenu.actions()[3].setEnabled(False)
             self.popMenu.actions()[4].setEnabled(False)
             self.popMenu.actions()[5].setEnabled(False)
             self.popMenu.actions()[6].setEnabled(False)
-        elif len(rows)==1:
-            if self.taskTable.item(int(rows[0]),3).text()!='complete':
+        elif len(rows) == 1:
+            if self.taskTable.item(int(rows[0]), 3).text() != 'complete':
                 self.popMenu.actions()[3].setEnabled(False)
                 self.popMenu.actions()[4].setEnabled(False)
                 self.popMenu.actions()[5].setEnabled(False)
                 self.popMenu.actions()[6].setEnabled(False)
-            if self.taskTable.item(int(rows[0]),6).text()=='':
+            if self.taskTable.item(int(rows[0]), 6).text() == '':
                 self.popMenu.actions()[4].setEnabled(False)
                 self.popMenu.actions()[5].setEnabled(False)
                 self.popMenu.actions()[6].setEnabled(False)
-            elif self.taskTable.item(int(rows[0]),6).text()=='paused':
+            elif self.taskTable.item(int(rows[0]), 6).text() == 'paused':
                 self.popMenu.actions()[3].setEnabled(False)
                 self.popMenu.actions()[5].setEnabled(False)
-            elif self.taskTable.item(int(rows[0]),6).text()=='complete':
+            elif self.taskTable.item(int(rows[0]), 6).text() == 'complete':
                 self.popMenu.actions()[3].setEnabled(False)
                 self.popMenu.actions()[4].setEnabled(False)
                 self.popMenu.actions()[5].setEnabled(False)
             else:
                 self.popMenu.actions()[3].setEnabled(False)
-                self.popMenu.actions()[4].setEnabled(False)               
+                self.popMenu.actions()[4].setEnabled(False)
 
         self.popMenu.exec_(QCursor.pos())
 
@@ -245,7 +251,7 @@ class Main(QMainWindow):
             with open('./res/serverInfo.json', 'w+') as file:
                 json.dump(self.userinfo, file)
             self.updateThread = UpdateFileStatus()
-            self.updateLocalThread=UpdatelocalFileStatus()
+            self.updateLocalThread = UpdatelocalFileStatus()
             self.timer = QTimer(self)
             self.timer.timeout.connect(self.updateThread.start)
             self.timer.timeout.connect(self.updateLocalThread.start)
@@ -260,11 +266,13 @@ class Main(QMainWindow):
                         self.aria2confpath.replace('aria2.conf',
                                                    'session.dat'), 'w')
                     f.close()
-                self.aria2process = subprocess.Popen(
-                    self.aria2exepath + ' --conf-path ' + self.aria2confpath +
-                    ' --save-session ' + self.aria2confpath.replace(
-                        'aria2.conf', 'session.dat') + ' --input-file ' +
-                    self.aria2confpath.replace('aria2.conf', 'session.dat'))
+                    global aria2process
+                    aria2process = subprocess.Popen(
+                        self.aria2exepath + ' --conf-path ' +
+                        self.aria2confpath + ' --save-session ' +
+                        self.aria2confpath.replace('aria2.conf', 'session.dat')
+                        + ' --input-file ' + self.aria2confpath.replace(
+                            'aria2.conf', 'session.dat'))
             self.getFileList()
 
     def updateFilelist(self, i, l, data):
@@ -272,11 +280,11 @@ class Main(QMainWindow):
             status = data
             gid = l[i]
             if 'error' in status.keys():
-                status=filesInfo[gid]
+                status = filesInfo[gid]
             filesInfo[gid] = status
             filename = status['result']['files'][0]['path'].split('/')[-1]
             if 'infoHash' in status['result'].keys():
-                linkaddress=status['result']['infoHash']
+                linkaddress = status['result']['infoHash']
             else:
                 linkaddress = status['result']['files'][0]['uris'][0]['uri']
             size = status['result']['files'][0]['length']
@@ -307,13 +315,14 @@ class Main(QMainWindow):
             if r != 'error':
                 status = json.loads(r)
                 if 'error' in status.keys():
-                    status=filesInfo[gid]
+                    status = filesInfo[gid]
                 filesInfo[gid] = status
                 filename = status['result']['files'][0]['path'].split('/')[-1]
                 if 'infoHash' in status['result'].keys():
-                    linkaddress=status['result']['infoHash']
+                    linkaddress = status['result']['infoHash']
                 else:
-                    linkaddress = status['result']['files'][0]['uris'][0]['uri']
+                    linkaddress = status['result']['files'][0]['uris'][0][
+                        'uri']
                 size = status['result']['files'][0]['length']
                 offlinestatus = status['result']['status']
                 if int(size) == 0:
@@ -400,7 +409,9 @@ class Main(QMainWindow):
         if not self.AddTorrentdlg:
             self.AddTorrentdlg = addUridlg(self)
             self.AddTorrentdlg.OkBtn.clicked.connect(self.AddNewTorrent)
-            self.AddTorrentdlg.UriLineEdit.setPlaceholderText('Magnet Links split with a space.')
+            self.AddTorrentdlg.UriLineEdit.setPlaceholderText(
+                'Magnet Links split with a space.')
+            self.AddTorrentdlg.setWindowTitle('Add new torrent Downloads')
             self.AddTorrentdlg.UriLabel.setText('Magnet Links')
             self.AddTorrentdlg.setModal(True)
         self.AddTorrentdlg.show()
@@ -433,7 +444,10 @@ class Main(QMainWindow):
         self.AddTorrentdlg.UriLineEdit.clear()
 
     def showAboutmedlg(self):
-        pass
+        if not self.aboutmedlg:
+            self.aboutmedlg = res.aboutmeDlg.aboutmedialog(self)
+            self.aboutmedlg.setModal(True)
+        self.aboutmedlg.show()
 
     def showAboutQtdlg(self):
         QMessageBox.aboutQt(self, 'About Qt')
@@ -459,17 +473,17 @@ class Main(QMainWindow):
                 self.updateLocalThread.start()
             self.retriveDlg.close()
 
-    def updateLocalFileList(self,i,status):
+    def updateLocalFileList(self, i, status):
         self.taskTable.item(i, 6).setText(status['status'])
         self.taskTable.item(i, 8).setText(status['downloadSpeed'])
-        if status['dir']!='err':
+        if status['dir'] != 'err':
             self.taskTable.item(i, 9).setText(status['dir'])
         else:
-            self.taskTable.item(i,9).setText(localFileInfo[i][1])
+            self.taskTable.item(i, 9).setText(localFileInfo[i][1])
         if int(status['totalLength']) != 0:
             self.taskTable.cellWidget(i, 7).setValue(
-                (int(status['completedLength']
-                        ) / int(status['totalLength'])) * 100)
+                (int(status['completedLength']) / int(status['totalLength'])) *
+                100)
         else:
             self.taskTable.cellWidget(i, 7).setValue(0)
 
@@ -501,13 +515,13 @@ class Main(QMainWindow):
             rows.append(int(itm.row()))
         for r in sorted(rows, reverse=True):
             gid = list(filesInfo.keys())[r]
-            a=res.Sendcmd.SendCommand('remove ' + gid, res.Sendcmd.server,
-                                    res.Sendcmd.port)
+            a = res.Sendcmd.SendCommand('remove ' + gid, res.Sendcmd.server,
+                                        res.Sendcmd.port)
             print(a)
-            a=res.Sendcmd.SendCommand('removeDownloadResult ' + gid,
-                                    res.Sendcmd.server, res.Sendcmd.port)
+            a = res.Sendcmd.SendCommand('removeDownloadResult ' + gid,
+                                        res.Sendcmd.server, res.Sendcmd.port)
             print(a)
-            a=res.Sendcmd.SendCommand(
+            a = res.Sendcmd.SendCommand(
                 '_delLocalFile_ ' +
                 filesInfo[gid]['result']['files'][0]['path'],
                 res.Sendcmd.server, res.Sendcmd.port)
@@ -525,22 +539,27 @@ class Main(QMainWindow):
 
     def Delete_Retrieve_slot(self):
         res.Sendcmd.DelLocalDownload(localFileInfo[self.currentIndex][0])
-        if os.path.exists(self.taskTable.item(self.currentIndex,9).text()):
-            os.remove(self.taskTable.item(self.currentIndex,9).text())
-        if os.path.exists(self.taskTable.item(self.currentIndex,9).text()+'.aria2'):
-            os.remove(self.taskTable.item(self.currentIndex,9).text()+'.aria2')
+        if os.path.exists(self.taskTable.item(self.currentIndex, 9).text()):
+            os.remove(self.taskTable.item(self.currentIndex, 9).text())
+        if os.path.exists(
+                self.taskTable.item(self.currentIndex, 9).text() + '.aria2'):
+            os.remove(
+                self.taskTable.item(self.currentIndex, 9).text() + '.aria2')
+
     def Resume_Retrieve_slot(self):
         res.Sendcmd.ResumeLocalDownload(localFileInfo[self.currentIndex][0])
 
     def closeEvent(self, event):
         if self.timer:
             self.timer.stop()
-        flag=True
+        flag = True
         for i in range(self.taskTable.rowCount()):
-            if self.taskTable.item(i,6).text()!='' and self.taskTable.item(i,6).text()!='complete':
-                QMessageBox.warning(self,'Warning','Please pause retrieve before exit.')
+            if self.taskTable.item(i, 6).text() != '' and self.taskTable.item(
+                    i, 6).text() != 'complete':
+                QMessageBox.warning(self, 'Warning',
+                                    'Please pause retrieve before exit.')
                 event.ignore()
-                flag=False
+                flag = False
                 break
         if flag:
             with open('./res/fileInfo.json', 'w') as file:
@@ -548,8 +567,9 @@ class Main(QMainWindow):
             with open('./res/localFileInfo.json', 'w') as file:
                 json.dump(localFileInfo, file)
             event.accept()
-            if self.aria2process:
-                self.aria2process.send_signal(signal.CTRL_C_EVENT)
+            global aria2process
+            if aria2process:
+                aria2process.send_signal(signal.CTRL_C_EVENT)
 
 
 class UpdateFileStatus(QThread):
@@ -568,6 +588,7 @@ class UpdateFileStatus(QThread):
             else:
                 self.NewData.emit(i, list(), dict())
 
+
 class UpdatelocalFileStatus(QThread):
     NewData = pyqtSignal(int, dict)
 
@@ -578,7 +599,8 @@ class UpdatelocalFileStatus(QThread):
         for i, gid in enumerate(localFileInfo):
             if len(gid):
                 status = res.Sendcmd.CheckLocalDownloadStatus(gid[0])
-                self.NewData.emit(i,status)
+                self.NewData.emit(i, status)
+
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
@@ -588,3 +610,6 @@ if __name__ == '__main__':
         sys.exit(app.exec_())
     except KeyboardInterrupt:
         pass
+    except Exception:
+        if aria2process:
+            aria2process.send_signal(signal.CTRL_C_EVENT)

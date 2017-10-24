@@ -3,13 +3,15 @@
 
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
+from PyQt5.QtGui import *
+
 
 class retriveDlg(QDialog):
-    def __init__(self,parent):
+    def __init__(self, parent):
         super().__init__(parent)
 
         self.InitUI()
-    
+
     def InitUI(self):
         mainlayout = QGridLayout(self)
         self.setLayout = mainlayout
@@ -25,7 +27,7 @@ class retriveDlg(QDialog):
         mainlayout.addWidget(self.PathLineEdit, 1, 1)
         mainlayout.addWidget(getDirBtn, 1, 2)
         mainlayout.addWidget(ThreadLabel, 2, 0)
-        middlelayout=QHBoxLayout()
+        middlelayout = QHBoxLayout()
         middlelayout.addWidget(self.ThreadSpinbox)
         middlelayout.addStretch()
         mainlayout.addLayout(middlelayout, 2, 1)
@@ -36,6 +38,8 @@ class retriveDlg(QDialog):
         downlayout.addWidget(CancelBtn)
         mainlayout.addLayout(downlayout, 3, 1)
         self.setFixedSize(520, 155)
+        self.setWindowTitle('Retrieve to local')
+        self.setWindowIcon(QIcon('./res/icon.png'))
 
         getDirBtn.clicked.connect(self.GetDir)
         CancelBtn.clicked.connect(self.CancelPressed)

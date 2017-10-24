@@ -29,51 +29,67 @@ def SendCommand(cmds, server, port):
         finally:
             sock.close()
 
-    result='error'
-    while result=='error':
-        result=send()
+    result = 'error'
+    while result == 'error':
+        result = send()
     return result
 
-def StartLocalDownload(filename,thread,path):
-    s=xmlrpc.client.ServerProxy('http://localhost:6800/rpc')
-    r=s.aria2.addUri(['ftp://192.168.204.128/'+filename],{'dir':path,'max-connection-per-server':thread,'split':thread})
+
+def StartLocalDownload(filename, thread, path):
+    s = xmlrpc.client.ServerProxy('http://localhost:6800/rpc')
+    r = s.aria2.addUri(['ftp://192.168.204.128/' + filename], {
+        'dir': path,
+        'max-connection-per-server': thread,
+        'split': thread
+    })
     return r
 
 
 def CheckLocalDownloadStatus(gid):
-    s=xmlrpc.client.ServerProxy('http://localhost:6800/rpc')
+    s = xmlrpc.client.ServerProxy('http://localhost:6800/rpc')
     try:
-        r=s.aria2.tellStatus(gid)
+        r = s.aria2.tellStatus(gid)
     except xmlrpc.client.Fault:
-        return {'status':'complete','downloadSpeed':'0','dir':'err','totalLength':'1','completedLength':'1'}
+        return {
+            'status': 'complete',
+            'downloadSpeed': '0',
+            'dir': 'err',
+            'totalLength': '1',
+            'completedLength': '1'
+        }
     else:
         return r
 
+
 def DelLocalDownload(gid):
-    s=xmlrpc.client.ServerProxy('http://localhost:6800/rpc')
+    s = xmlrpc.client.ServerProxy('http://localhost:6800/rpc')
     try:
-        r=s.aria2.remove(gid)
+        r = s.aria2.remove(gid)
     except xmlrpc.client.Fault:
         return {}
     try:
-        r=s.aria2.removeDownloadResult(gid)
+        r = s.aria2.removeDownloadResult(gid)
     except xmlrpc.client.Fault:
         return {}
+
 
 def PauseLocalDownload(gid):
-    s=xmlrpc.client.ServerProxy('http://localhost:6800/rpc')
-    r=s.aria2.pause(gid)
+    s = xmlrpc.client.ServerProxy('http://localhost:6800/rpc')
+    r = s.aria2.pause(gid)
+
 
 def ResumeLocalDownload(gid):
-    s=xmlrpc.client.ServerProxy('http://localhost:6800/rpc')
-    r=s.aria2.unpause(gid)
+    s = xmlrpc.client.ServerProxy('http://localhost:6800/rpc')
+    r = s.aria2.unpause(gid)
 
 
 if __name__ == '__main__':
-    a = SendCommand('addUri https://github.com/JustArchi/ArchiSteamFarm/releases/download/3.0.3.6/ASF-linux-x64.zip https://github.com/JustArchi/ArchiSteamFarm/releases/download/3.0.4.0/ASF-linux-arm.zip https://github.com/JustArchi/ArchiSteamFarm/releases/download/3.0.4.0/ASF-win-x64.zip',server,port)
+    a = SendCommand(
+        'addUri https://github.com/JustArchi/ArchiSteamFarm/releases/download/3.0.3.6/ASF-linux-x64.zip https://github.com/JustArchi/ArchiSteamFarm/releases/download/3.0.4.0/ASF-linux-arm.zip https://github.com/JustArchi/ArchiSteamFarm/releases/download/3.0.4.0/ASF-win-x64.zip',
+        server, port)
     import json
-    j=json.loads(a)
-    b=j['result']
+    j = json.loads(a)
+    b = j['result']
     import time
 
     def test():
