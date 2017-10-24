@@ -21,7 +21,7 @@ def SendCommand(cmds, server, port):
 
         sock.send(cmds.encode('utf8'))
         try:
-            data = sock.recv(2048)
+            data = sock.recv(4096)
         except socket.timeout:
             return 'error'
         else:
