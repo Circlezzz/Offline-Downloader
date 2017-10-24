@@ -165,6 +165,9 @@ def cmd_argv2(token,pid,cmd):
         'params': ['token:' + token,pid]
     })
     r=requests.post('http://localhost:6800/jsonrpc',jsonreq)
+    j=json.loads(r.text())
+    j['result']['bittorrent']={}
+    return json.dumps(j).encode('utf8')
     print(r)
     return r.content
 
