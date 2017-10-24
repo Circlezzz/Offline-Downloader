@@ -275,7 +275,10 @@ class Main(QMainWindow):
                 status=filesInfo[gid]
             filesInfo[gid] = status
             filename = status['result']['files'][0]['path'].split('/')[-1]
-            linkaddress = status['result']['files'][0]['uris'][0]['uri']
+            if 'hashInfo' in status['result'].keys():
+                linkaddress=status['result']['hashInfo']
+            else:
+                linkaddress = status['result']['files'][0]['uris'][0]['uri']
             size = status['result']['files'][0]['length']
             offlinestatus = status['result']['status']
             if int(size) == 0:
@@ -307,7 +310,10 @@ class Main(QMainWindow):
                     status=filesInfo[gid]
                 filesInfo[gid] = status
                 filename = status['result']['files'][0]['path'].split('/')[-1]
-                linkaddress = status['result']['files'][0]['uris'][0]['uri']
+                if 'infoHash' in status['result'].keys():
+                    linkaddress=status['result']['infoHash']
+                else:
+                    linkaddress = status['result']['files'][0]['uris'][0]['uri']
                 size = status['result']['files'][0]['length']
                 offlinestatus = status['result']['status']
                 if int(size) == 0:
@@ -402,7 +408,7 @@ class Main(QMainWindow):
     def AddNewTorrent(self):
         duplicatelink = []
         for uri in self.AddTorrentdlg.UriLineEdit.text().split():
-            if uri in {
+            if uri.split(':')[-1] in {
                     self.taskTable.item(i, 1).text()
                     for i in range(self.taskTable.rowCount())
             }:
